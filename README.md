@@ -2,20 +2,30 @@
 
 **Counterfactual flight planning for reducing aviation's contrail climate impact.**
 
+> Built for the [TechCommons V2 Hackathon](https://techcommons-hacks-v2.devpost.com/?ref_feature=challenge&ref_medium=your-open-hackathons&ref_content=Submissions+open).
+
 What if a small change in a flight's trajectory could substantially reduce its modeled contrail
+
 climate impact — and what would that change actually cost?
 
 `node --test` 60/60 engine + provider tests · 29/29 UI-logic tests · TypeScript strict mode ·
+
 zero LLM calls anywhere in the computation path
 
 Isobar is a counterfactual flight-analysis engine that replays real flight trajectories,
+
 identifies the atmospheric regions where persistent contrails are more likely to form, generates
+
 physically constrained alternative flight profiles, and quantifies the tradeoff between modeled
+
 climate impact and operational cost — interactively, in a 2D radar scope or a 3D globe, entirely
+
 offline.
 
 **[Quick start](#quick-start)** · **[The optimization problem](#the-optimization-problem)** ·
+
 **[Pipeline](#how-it-works-the-simulation-pipeline)** · **[Data sources & API integration](#data-sources--api-integration)** ·
+
 **[Architecture](#architecture)** · **[Roadmap](#whats-next)**
 
 ---
