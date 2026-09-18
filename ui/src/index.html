@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Isobar</title>
+<style id="app-styles">/*__STYLES__*/</style>
+</head>
+<body>
+<a href="#mainContent" class="skip-link">Skip to main content</a>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand" tabindex="0" role="button" aria-label="Isobar home">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <div class="brand-name">Isobar</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill"><span class="dot" aria-hidden="true"></span>Demo dataset &middot; offline</span>
+    </div>
+  </div>
+
+  <main id="mainContent">
+  <!-- ================= LANDING ================= -->
+  <div class="view active" id="landingView">
+    <div class="landing">
+      <div class="landing-content">
+        <div class="kicker">Counterfactual flight-analysis laboratory</div>
+        <h1>Isobar</h1>
+        <p class="tagline">Replay a real flight. Change its trajectory. See what the decision costs — and what it avoids.</p>
+        <div class="landing-ctas">
+          <button class="btn btn-primary" id="exploreBtn">Explore a flight →</button>
+          <button class="btn btn-ghost" id="howItWorksBtn">How it works</button>
+        </div>
+      </div>
+
+      <div class="flight-select" id="flightSelect">
+        <h2 id="flightGridLabel">Curated flights</h2>
+        <div class="flight-grid" id="flightGrid" role="list" aria-labelledby="flightGridLabel" aria-busy="true"></div>
+      </div>
+
+      <div class="how-strip">
+        <div class="model-flow" role="img" aria-label="Data pipeline: flight data, trajectory normalization, 4D atmospheric sampling, contrail exposure, critical window detection, counterfactual generation, operational cost model, Pareto analysis">
+          <span class="node">FLIGHT DATA</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">TRAJECTORY NORMALIZATION</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">4D ATMOSPHERIC SAMPLING</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">CONTRAIL EXPOSURE</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">CRITICAL WINDOW</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">COUNTERFACTUAL</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">OPERATIONAL COST</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">PARETO ANALYSIS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FLIGHT VIEW ================= -->
+  <div class="view" id="flightView">
+    <div class="flight-view">
+      <span class="back-link" id="backLink2" tabindex="0" role="button">&larr; All flights</span>
+      <div class="flight-view-header">
+        <div>
+          <div class="route-big" id="fvRoute"></div>
+          <div class="sub" id="fvSub"></div>
+        </div>
+      </div>
+
+      <div class="fv-grid">
+        <!-- LEFT: scope + timeline + altitude -->
+        <div>
+          <div class="scope-wrap">
+            <div class="scope-mode-toggle" id="scopeModeToggle" role="group" aria-label="Visualization mode">
+              <button class="scope-mode-btn active" data-mode="2d" aria-pressed="true">2D scope</button>
+              <button class="scope-mode-btn" data-mode="3d" aria-pressed="false">3D globe</button>
+              <button class="scope-mode-btn sat-toggle" id="satToggleBtn" data-mode="sat" aria-pressed="false" title="Toggle satellite-observation overlay">Satellite layer</button>
+            </div>
+            <canvas id="scopeCanvas" role="img" aria-label="Radar-style map of the flight route, colored by modeled contrail risk, with the aircraft's current position"></canvas>
+            <canvas id="globeCanvas" class="hidden" role="img" aria-label="3D globe view of the same flight route and risk data. Drag to rotate, scroll to zoom." tabindex="0"></canvas>
+            <div class="scope-hud" aria-hidden="true">
+              <div>ALT&nbsp; <span class="hud-alt" id="hudAlt">—</span></div>
+              <div>UTC&nbsp; <span id="hudTime">—</span></div>
+              <div>RISK&nbsp; <span id="hudRisk">—</span></div>
+            </div>
+            <div class="scope-legend" aria-hidden="true">
+              <span><span class="legend-swatch" style="background:var(--actual)"></span>actual</span>
+              <span><span class="legend-swatch" style="background:var(--warn)"></span>critical window</span>
+              <span id="legendCf" class="hidden"><span class="legend-swatch" style="background:var(--counterfactual);border-top:2px dashed var(--counterfactual);background:transparent;"></span>counterfactual</span>
+              <span id="legendSat" class="hidden"><span class="legend-swatch" style="background:var(--sat);"></span>satellite (synthetic)</span>
+            </div>
+          </div>
+
+          <div class="transport" role="group" aria-label="Replay controls">
+            <button class="transport-btn" id="restartBtn" aria-label="Restart replay from the beginning">
+              <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.546 2.914" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M2 2v4h4" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>
+            </button>
+            <button class="transport-btn" id="playBtn" aria-label="Play replay" aria-pressed="false"></button>
+            <div class="timeline-wrap">
+              <div class="timeline-track" id="timelineTrack" aria-hidden="true">
+                <div class="timeline-fill" id="timelineFill"></div>
+              </div>
+              <div class="timeline-thumb" id="timelineThumb" aria-hidden="true"></div>
+              <input type="range" class="timeline-input" id="timelineInput" min="0" max="100" value="0" aria-label="Flight replay position" />
+            </div>
+            <span class="time-readout" id="timeReadout" aria-live="polite">—</span>
+          </div>
+
+          <div class="panel alt-chart-wrap">
+            <div class="panel-title">Altitude profile <button class="btn btn-ghost btn-sm" id="jumpCriticalBtn">Jump to critical window</button></div>
+            <svg id="altChart" role="img" aria-label="Altitude profile of the flight over time, with the critical contrail-sensitive window shaded"></svg>
+          </div>
+
+          <div class="panel" id="whatIfPanelHost"><!-- Phase 2 --></div>
+          <div class="panel hidden" id="resultPanelHost" aria-live="polite"><!-- Phase 2 --></div>
+        </div>
+
+        <!-- RIGHT: analysis drawer -->
+        <div>
+          <div class="panel">
+            <div class="panel-title">Where did it matter?</div>
+            <div id="criticalWindowPanel"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Atmospheric conditions <span class="dim mono" style="font-size:10px;">at cursor</span></div>
+            <div id="atmoPanel" aria-live="polite"></div>
+          </div>
+          <div class="panel hidden" id="paretoTeaserHost"><!-- Phase 3 --></div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        Experimental counterfactual analysis prototype — modeled, estimated, not flight-dispatch guidance. <a href="#" id="howItWorksBtn2">Methodology &amp; limitations</a>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <!-- ================= PARETO OVERLAY ================= -->
+  <div class="modal-backdrop" id="paretoBackdrop" role="dialog" aria-modal="true" aria-labelledby="paretoTitle">
+    <div class="modal-box pareto-box">
+      <div class="modal-header">
+        <h3 id="paretoTitle">The tradeoff</h3>
+        <button class="modal-close" id="paretoClose" aria-label="Close tradeoff view">&times;</button>
+      </div>
+      <div class="pareto-header">
+        <p>Every point is a different possible flight — one generated altitude strategy, replayed against the same atmosphere. There is no free option: reducing modeled contrail impact costs fuel, CO&sub2;, and time. Click any point to inspect it.</p>
+      </div>
+      <div class="pareto-chart-wrap">
+        <svg id="paretoSvg" role="img" aria-label="Scatter plot of generated flight alternatives: operational cost in kilograms of fuel on a log scale versus modeled contrail impact reduction. Points can be clicked to inspect."></svg>
+        <div class="pareto-tooltip" id="paretoTooltip"></div>
+      </div>
+      <div class="pareto-legend-row" aria-hidden="true">
+        <span><span class="dot-sw" style="background:var(--text-2);"></span>dominated alternative</span>
+        <span><span class="dot-sw" style="background:var(--accent);"></span>non-dominated (Pareto frontier)</span>
+        <span><span class="dot-sw" style="background:var(--good);"></span>high-leverage (knee)</span>
+        <span><span class="dot-sw" style="background:var(--bad);"></span>baseline (actual flight)</span>
+      </div>
+      <div class="pareto-knee-callout" id="paretoKneeCallout"></div>
+    </div>
+  </div>
+
+  <!-- ================= EXPLANATION MODAL ================= -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">How this was calculated</h3>
+        <button class="modal-close" id="modalClose" aria-label="Close explanation">&times;</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script id="engine-bundle">/*__ENGINE__*/</script>
+<script id="logic-bundle">/*__LOGIC__*/</script>
+<script id="satellite-bundle">/*__SATELLITE__*/</script>
+<script id="globe-bundle">/*__GLOBE__*/</script>
+<script id="whatif-bundle">/*__WHATIF__*/</script>
+<script id="pareto-bundle">/*__PARETO__*/</script>
+<script id="app-bundle">/*__APP__*/</script>
+<script>
+  document.getElementById("backLink2").addEventListener("click", function () {
+    document.querySelector(".brand").click();
+  });
+  document.getElementById("backLink2").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      document.querySelector(".brand").click();
+    }
+  });
+  document.getElementById("howItWorksBtn2").addEventListener("click", function (e) {
+    e.preventDefault();
+    window.openExplainModal("overview");
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,3101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Isobar</title>
+<style id="app-styles">/* ==========================================================================
+   CONTRAIL TRADEOFF — design system
+   scientific mission-control + premium aviation software + radar/nav-display
+   ========================================================================== */
+
+:root {
+  --bg-0: #05070a;
+  --bg-1: #0a0e14;
+  --bg-2: #10151d;
+  --bg-3: #161d27;
+  --panel: rgba(16, 21, 29, 0.82);
+  --panel-border: rgba(120, 170, 210, 0.14);
+  --line-dim: rgba(140, 190, 230, 0.16);
+  --line-mid: rgba(150, 200, 240, 0.32);
+
+  --text-0: #eef3f7;
+  --text-1: #aebccb;
+  --text-2: #71828f;
+  --text-dim: #4b5862;
+
+  --accent: #4fd6c8;         /* cyan-teal — primary data / route */
+  --accent-soft: rgba(79, 214, 200, 0.18);
+  --warn: #f2a154;           /* amber — critical window / caution */
+  --warn-soft: rgba(242, 161, 84, 0.16);
+  --bad: #ef6a6a;            /* red — cost / worse outcome */
+  --bad-soft: rgba(239, 106, 106, 0.14);
+  --good: #7fe0a7;           /* green — benefit / reduction */
+  --good-soft: rgba(127, 224, 167, 0.14);
+  --actual: #6fb8ff;         /* blue — "actual" trajectory */
+  --counterfactual: #f2a154; /* amber — "counterfactual" trajectory */
+  --sat: #c98bf2;            /* violet — synthetic satellite observation layer */
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --mono: "SF Mono", "IBM Plex Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --sans: "Inter", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root:not([data-theme="light"]) { color-scheme: dark; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg-0: #eef1f4; --bg-1: #e6eaee; --bg-2: #dde3e8; --bg-3: #d3dbe2;
+    --panel: rgba(255,255,255,0.86); --panel-border: rgba(20,40,60,0.12);
+    --line-dim: rgba(20,60,90,0.12); --line-mid: rgba(20,60,90,0.26);
+    --text-0: #10161c; --text-1: #3a4753; --text-2: #62707c; --text-dim: #8794a0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-0: #05070a; --bg-1: #0a0e14; --bg-2: #10151d; --bg-3: #161d27;
+  --text-0: #eef3f7; --text-1: #aebccb; --text-2: #71828f; --text-dim: #4b5862;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(ellipse 120% 80% at 50% -10%, #0f1720 0%, var(--bg-0) 55%);
+  color: var(--text-0);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: var(--accent-soft); color: var(--text-0); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-mid); border-radius: 8px; }
+
+/* keyboard focus is always visible; mouse clicks don't show the ring */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 200;
+  background: var(--accent); color: #04211d; font-weight: 700; font-size: 13px;
+  padding: 10px 16px; border-radius: 6px; transition: top 0.15s var(--ease);
+}
+.skip-link:focus { top: 12px; }
+
+.mono { font-family: var(--mono); }
+.dim { color: var(--text-2); }
+.hidden { display: none !important; }
+button { font-family: inherit; }
+a { color: var(--accent); }
+
+/* ---------- layout shells ---------- */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 22px;
+  background: linear-gradient(180deg, rgba(8,11,16,0.92), rgba(8,11,16,0.72));
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--panel-border);
+}
+.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.brand-mark {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  position: relative;
+  box-shadow: 0 0 12px var(--accent-soft);
+}
+.brand-mark::before, .brand-mark::after {
+  content: ""; position: absolute; background: var(--accent);
+}
+.brand-mark::before { top: 50%; left: 15%; right: 15%; height: 1px; transform: translateY(-50%); }
+.brand-mark::after { left: 50%; top: 15%; bottom: 15%; width: 1px; transform: translateX(-50%); }
+.brand-name { font-weight: 600; letter-spacing: 0.06em; font-size: 14px; text-transform: uppercase; }
+.brand-sub { color: var(--text-2); font-size: 11px; letter-spacing: 0.04em; }
+.topbar-right { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-2); }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--panel-border); border-radius: 100px;
+  padding: 5px 11px; font-size: 11px; letter-spacing: 0.03em; color: var(--text-1);
+  background: rgba(255,255,255,0.02);
+}
+.pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+.view { flex: 1; display: none; }
+.view.active { display: block; }
+
+/* ---------- landing ---------- */
+.landing {
+  position: relative;
+  min-height: calc(100vh - 60px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px 80px;
+  overflow: hidden;
+}
+.landing-bg { position: absolute; inset: 0; z-index: 0; opacity: 0.55; pointer-events: none; }
+.landing-content { position: relative; z-index: 1; max-width: 840px; text-align: center; }
+.kicker {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; color: var(--accent);
+  text-transform: uppercase; margin-bottom: 18px;
+}
+.landing h1 {
+  font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1.02; margin: 0 0 20px;
+  font-weight: 700; letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #ffffff 0%, #b9c8d6 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.landing p.tagline {
+  font-size: clamp(1rem, 2vw, 1.25rem); color: var(--text-1); line-height: 1.55;
+  max-width: 620px; margin: 0 auto 36px;
+}
+.landing-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
+.btn {
+  font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: 0.02em;
+  padding: 12px 22px; border-radius: var(--radius-sm); border: 1px solid transparent;
+  cursor: pointer; transition: transform 0.15s var(--ease), background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #04211d; box-shadow: 0 0 0 0 transparent; }
+.btn-primary:hover { box-shadow: 0 4px 24px -4px var(--accent-soft); transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text-1); border-color: var(--panel-border); }
+.btn-ghost:hover { border-color: var(--line-mid); color: var(--text-0); }
+.btn-sm { padding: 8px 14px; font-size: 12px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* flight cards */
+.flight-select { width: 100%; max-width: 1040px; margin: 56px auto 0; position: relative; z-index: 1; }
+.flight-select h2 { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-2); text-align: left; margin: 0 0 16px; font-weight: 600; }
+.flight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 900px) { .flight-grid { grid-template-columns: 1fr; } }
+.flight-card {
+  text-align: left; background: var(--panel); border: 1px solid var(--panel-border);
+  border-radius: var(--radius); padding: 18px 18px 16px; cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s var(--ease), box-shadow 0.18s;
+  position: relative; overflow: hidden;
+}
+.flight-card:hover { border-color: var(--line-mid); transform: translateY(-2px); box-shadow: 0 14px 34px -18px rgba(0,0,0,0.6); }
+.flight-card .route { font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: 0.01em; margin-bottom: 4px; }
+.flight-card .route .arrow { color: var(--text-2); margin: 0 6px; font-weight: 400; }
+.flight-card .aircraft { font-size: 12.5px; color: var(--text-1); margin-bottom: 14px; }
+.flight-card .meta-row { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-2); margin-bottom: 10px; }
+.sensitivity-badge {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px; border: 1px solid;
+}
+.sensitivity-badge.high { color: var(--bad); border-color: rgba(239,106,106,0.4); background: var(--bad-soft); }
+.sensitivity-badge.moderate { color: var(--warn); border-color: rgba(242,161,84,0.4); background: var(--warn-soft); }
+.sensitivity-badge.low { color: var(--good); border-color: rgba(127,224,167,0.4); background: var(--good-soft); }
+.flight-card .impact-line { font-family: var(--mono); font-size: 11px; color: var(--text-2); border-top: 1px solid var(--panel-border); padding-top: 10px; }
+.flight-card .replay-cta { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 0.03em; }
+
+/* skeleton loading for cards */
+.skel { background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 37%, var(--bg-2) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: 4px; }
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+
+/* ---------- how it works strip ---------- */
+.how-strip { max-width: 1040px; margin: 64px auto 0; position: relative; z-index: 1; width: 100%; }
+.model-flow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; font-family: var(--mono); font-size: 10.5px; color: var(--text-2); letter-spacing: 0.02em; }
+.model-flow .node { padding: 7px 10px; border: 1px solid var(--panel-border); border-radius: 100px; white-space: nowrap; }
+.model-flow .arrow-sep { color: var(--text-dim); }
+
+/* ---------- flight view shell ---------- */
+.flight-view { padding: 18px 22px 40px; max-width: 1400px; margin: 0 auto; }
+.flight-view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.flight-view-header .route-big { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+.flight-view-header .route-big .arrow { color: var(--text-2); margin: 0 8px; }
+.flight-view-header .sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+.fv-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1080px) { .fv-grid { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.panel + .panel { margin-top: 16px; }
+.panel-title { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; }
+
+/* radar / scope canvas */
+.scope-wrap { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--panel-border); background: radial-gradient(ellipse at 50% 40%, #0d1219 0%, #070a0f 100%); }
+.scope-wrap canvas { display: block; width: 100%; height: 420px; }
+#globeCanvas { cursor: grab; }
+#globeCanvas:active { cursor: grabbing; }
+.scope-mode-toggle { position: absolute; top: 10px; right: 12px; z-index: 3; display: flex; gap: 4px; background: rgba(8,11,16,0.72); border: 1px solid var(--panel-border); border-radius: 100px; padding: 3px; backdrop-filter: blur(6px); }
+.scope-mode-btn { font-family: var(--mono); font-size: 10px; letter-spacing: 0.03em; padding: 5px 10px; border-radius: 100px; border: none; background: transparent; color: var(--text-2); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.scope-mode-btn:hover { color: var(--text-0); }
+.scope-mode-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.scope-mode-btn.sat-toggle.active { background: rgba(201,139,242,0.18); color: var(--sat); }
+.scope-mode-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.scope-hud { position: absolute; top: 12px; left: 14px; font-family: var(--mono); font-size: 10.5px; color: var(--text-2); line-height: 1.6; pointer-events: none; }
+.scope-hud .hud-alt { color: var(--accent); font-size: 15px; font-weight: 600; }
+.scope-legend { position: absolute; bottom: 12px; right: 14px; display: flex; gap: 14px; font-family: var(--mono); font-size: 10px; color: var(--text-2); }
+.scope-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend-swatch { width: 12px; height: 2px; display: inline-block; }
+
+/* timeline / transport controls */
+.transport { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.transport-btn {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-border);
+  background: var(--bg-2); color: var(--text-0); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s; flex-shrink: 0;
+}
+.transport-btn:hover { border-color: var(--line-mid); background: var(--bg-3); }
+.timeline-wrap { flex: 1; position: relative; height: 34px; }
+.timeline-track { position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: var(--bg-3); border-radius: 3px; transform: translateY(-50%); overflow: hidden; }
+.timeline-fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--accent); border-radius: 3px; width: 0%; }
+.timeline-critical { position: absolute; top: 0; bottom: 0; background: var(--warn); opacity: 0.55; }
+.timeline-input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; margin: 0; }
+.timeline-thumb { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--text-0); border: 2px solid var(--accent); transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 8px rgba(0,0,0,0.5); }
+.time-readout { font-family: var(--mono); font-size: 11px; color: var(--text-2); width: 54px; text-align: right; flex-shrink: 0; }
+
+/* altitude strip chart */
+.alt-chart-wrap { margin-top: 14px; }
+.alt-chart-wrap svg { width: 100%; height: 110px; display: block; overflow: visible; }
+
+/* drawer panels */
+.stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed var(--panel-border); font-size: 12.5px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-row .k { color: var(--text-2); }
+.stat-row .v { font-family: var(--mono); color: var(--text-0); font-weight: 600; }
+.stat-row .v.warn { color: var(--warn); }
+.stat-row .v.good { color: var(--good); }
+.stat-row .v.bad { color: var(--bad); }
+
+.conf-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; border: 1px solid; }
+.conf-badge.low { color: var(--text-2); border-color: var(--panel-border); }
+.conf-badge.medium { color: var(--warn); border-color: rgba(242,161,84,0.35); }
+.conf-badge.high { color: var(--good); border-color: rgba(127,224,167,0.35); }
+
+.critical-window-box { border: 1px solid rgba(242,161,84,0.3); background: var(--warn-soft); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; transition: background 0.15s; }
+.critical-window-box:hover { background: rgba(242,161,84,0.24); }
+.critical-window-box .cw-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warn); font-weight: 700; margin-bottom: 6px; }
+.critical-window-box .cw-range { font-family: var(--mono); font-size: 14px; color: var(--text-0); margin-bottom: 4px; }
+.critical-window-box .cw-desc { font-size: 12px; color: var(--text-1); line-height: 1.5; }
+
+.empty-note { font-size: 12px; color: var(--text-2); line-height: 1.6; padding: 6px 0; }
+
+/* what-if builder */
+.whatif-section { margin-top: 4px; }
+.seg-control { display: flex; border: 1px solid var(--panel-border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 14px; }
+.seg-btn { flex: 1; padding: 9px 6px; text-align: center; font-size: 12px; background: transparent; border: none; color: var(--text-2); cursor: pointer; transition: background 0.15s, color 0.15s; border-right: 1px solid var(--panel-border); }
+.seg-btn:last-child { border-right: none; }
+.seg-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.seg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.alt-select-label { font-size: 11px; color: var(--text-2); margin-bottom: 8px; }
+.alt-offsets { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 16px; }
+.alt-offset-btn {
+  font-family: var(--mono); font-size: 11.5px; padding: 9px 2px; border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border); background: var(--bg-2); color: var(--text-1); cursor: pointer;
+  transition: all 0.15s;
+}
+.alt-offset-btn:hover:not(:disabled) { border-color: var(--line-mid); color: var(--text-0); }
+.alt-offset-btn.active { background: var(--accent); color: #04211d; border-color: var(--accent); font-weight: 700; }
+.alt-offset-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.alt-offset-btn.zero { color: var(--text-dim); }
+
+.simulate-btn { width: 100%; justify-content: center; margin-top: 4px; }
+.sim-loading { font-family: var(--mono); font-size: 12px; color: var(--accent); padding: 14px 0 4px; text-align: center; min-height: 20px; }
+.sim-loading .dot-anim::after { content: ''; animation: dots 1.2s steps(4, end) infinite; }
+@keyframes dots { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
+
+/* result panel */
+.result-hero { text-align: center; padding: 6px 0 18px; }
+.result-hero .rh-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-2); margin-bottom: 6px; }
+.result-hero .rh-value { font-size: 42px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.result-hero .rh-value.good { color: var(--good); }
+.result-hero .rh-value.bad { color: var(--bad); }
+.result-hero .rh-assessment { margin-top: 10px; font-size: 12px; color: var(--text-1); }
+.assessment-badge { display: inline-block; padding: 4px 12px; border-radius: 100px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 6px; }
+.assessment-badge.leverage { background: var(--good-soft); color: var(--good); border: 1px solid rgba(127,224,167,0.35); }
+.assessment-badge.aggressive { background: var(--warn-soft); color: var(--warn); border: 1px solid rgba(242,161,84,0.35); }
+.assessment-badge.worse { background: var(--bad-soft); color: var(--bad); border: 1px solid rgba(239,106,106,0.35); }
+.assessment-badge.neutral { background: rgba(255,255,255,0.05); color: var(--text-1); border: 1px solid var(--panel-border); }
+
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.result-metric { background: var(--bg-2); border-radius: var(--radius-sm); padding: 10px 12px; }
+.result-metric .rm-label { font-size: 10px; color: var(--text-2); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 4px; }
+.result-metric .rm-value { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+.result-metric .rm-value.good { color: var(--good); }
+.result-metric .rm-value.bad { color: var(--bad); }
+
+.explain-link { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 14px; padding: 10px; font-size: 12px; color: var(--text-1); background: transparent; border: 1px dashed var(--panel-border); border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.explain-link:hover { border-color: var(--line-mid); color: var(--text-0); }
+
+/* compare strip (actual vs counterfactual bars) */
+.compare-strip { margin-top: 6px; }
+.compare-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.compare-row .cr-label { width: 92px; font-size: 10.5px; color: var(--text-2); font-family: var(--mono); flex-shrink: 0; }
+.compare-bar-track { flex: 1; height: 8px; background: var(--bg-3); border-radius: 4px; position: relative; overflow: hidden; }
+.compare-bar-fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; }
+.compare-bar-fill.actual { background: var(--actual); }
+.compare-bar-fill.counterfactual { background: var(--counterfactual); }
+
+/* modal / explanation panel */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(4,6,9,0.72); backdrop-filter: blur(3px); z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.2s var(--ease); }
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal-box { background: var(--bg-1); border: 1px solid var(--panel-border); border-radius: 14px; max-width: 640px; width: 100%; padding: 26px 28px 28px; transform: translateY(10px); transition: transform 0.2s var(--ease); box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6); }
+.modal-backdrop.open .modal-box { transform: translateY(0); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.modal-header h3 { margin: 0; font-size: 17px; font-weight: 700; }
+.modal-close { background: transparent; border: none; color: var(--text-2); font-size: 20px; cursor: pointer; line-height: 1; padding: 4px; }
+.modal-close:hover { color: var(--text-0); }
+.explain-flow { display: flex; flex-direction: column; gap: 0; margin: 18px 0; font-family: var(--mono); font-size: 12px; }
+.explain-step { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--panel-border); }
+.explain-step:last-child { border-bottom: none; }
+.explain-step .es-k { width: 130px; color: var(--text-2); flex-shrink: 0; }
+.explain-step .es-v { color: var(--text-0); }
+.limitations-list { margin: 14px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--text-1); line-height: 1.7; }
+.limitations-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bad); font-weight: 700; margin-top: 18px; }
+
+/* misc */
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.footer-note { text-align: center; font-size: 11px; color: var(--text-dim); padding: 30px 20px 40px; line-height: 1.7; max-width: 640px; margin: 0 auto; }
+.footer-note a { color: var(--text-2); }
+
+.back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); cursor: pointer; margin-bottom: 6px; }
+.back-link:hover { color: var(--text-0); }
+
+/* ---------- pareto full view ---------- */
+.pareto-box { max-width: 980px; }
+.pareto-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.pareto-header h3 { font-size: 19px; margin: 0 0 4px; }
+.pareto-header p { margin: 0; font-size: 12.5px; color: var(--text-2); max-width: 520px; line-height: 1.5; }
+.pareto-chart-wrap { position: relative; margin-top: 18px; }
+.pareto-chart-wrap svg { width: 100%; height: 440px; overflow: visible; }
+.pareto-point { cursor: pointer; transition: r 0.12s; }
+.pareto-point:hover { filter: brightness(1.3); }
+.pareto-tooltip {
+  position: absolute; pointer-events: none; background: var(--bg-1); border: 1px solid var(--panel-border);
+  border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 10.5px; color: var(--text-0);
+  transform: translate(-50%, -110%); white-space: nowrap; z-index: 5; box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5);
+  opacity: 0; transition: opacity 0.1s;
+}
+.pareto-tooltip.show { opacity: 1; }
+.pareto-legend-row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-size: 11px; color: var(--text-2); font-family: var(--mono); }
+.pareto-legend-row span { display: inline-flex; align-items: center; gap: 6px; }
+.pareto-legend-row .dot-sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pareto-knee-callout { margin-top: 14px; background: var(--good-soft); border: 1px solid rgba(127,224,167,0.3); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; color: var(--text-1); line-height: 1.55; }
+.pareto-knee-callout strong { color: var(--good); }
+
+.pareto-teaser-cta { width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+}
+</style>
+</head>
+<body>
+<a href="#mainContent" class="skip-link">Skip to main content</a>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand" tabindex="0" role="button" aria-label="Isobar home">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <div class="brand-name">Isobar</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill"><span class="dot" aria-hidden="true"></span>Demo dataset &middot; offline</span>
+    </div>
+  </div>
+
+  <main id="mainContent">
+  <!-- ================= LANDING ================= -->
+  <div class="view active" id="landingView">
+    <div class="landing">
+      <div class="landing-content">
+        <div class="kicker">Counterfactual flight-analysis laboratory</div>
+        <h1>Isobar</h1>
+        <p class="tagline">Replay a real flight. Change its trajectory. See what the decision costs — and what it avoids.</p>
+        <div class="landing-ctas">
+          <button class="btn btn-primary" id="exploreBtn">Explore a flight →</button>
+          <button class="btn btn-ghost" id="howItWorksBtn">How it works</button>
+        </div>
+      </div>
+
+      <div class="flight-select" id="flightSelect">
+        <h2 id="flightGridLabel">Curated flights</h2>
+        <div class="flight-grid" id="flightGrid" role="list" aria-labelledby="flightGridLabel" aria-busy="true"></div>
+      </div>
+
+      <div class="how-strip">
+        <div class="model-flow" role="img" aria-label="Data pipeline: flight data, trajectory normalization, 4D atmospheric sampling, contrail exposure, critical window detection, counterfactual generation, operational cost model, Pareto analysis">
+          <span class="node">FLIGHT DATA</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">TRAJECTORY NORMALIZATION</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">4D ATMOSPHERIC SAMPLING</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">CONTRAIL EXPOSURE</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">CRITICAL WINDOW</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">COUNTERFACTUAL</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">OPERATIONAL COST</span><span class="arrow-sep" aria-hidden="true">→</span>
+          <span class="node">PARETO ANALYSIS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FLIGHT VIEW ================= -->
+  <div class="view" id="flightView">
+    <div class="flight-view">
+      <span class="back-link" id="backLink2" tabindex="0" role="button">&larr; All flights</span>
+      <div class="flight-view-header">
+        <div>
+          <div class="route-big" id="fvRoute"></div>
+          <div class="sub" id="fvSub"></div>
+        </div>
+      </div>
+
+      <div class="fv-grid">
+        <!-- LEFT: scope + timeline + altitude -->
+        <div>
+          <div class="scope-wrap">
+            <div class="scope-mode-toggle" id="scopeModeToggle" role="group" aria-label="Visualization mode">
+              <button class="scope-mode-btn active" data-mode="2d" aria-pressed="true">2D scope</button>
+              <button class="scope-mode-btn" data-mode="3d" aria-pressed="false">3D globe</button>
+              <button class="scope-mode-btn sat-toggle" id="satToggleBtn" data-mode="sat" aria-pressed="false" title="Toggle satellite-observation overlay">Satellite layer</button>
+            </div>
+            <canvas id="scopeCanvas" role="img" aria-label="Radar-style map of the flight route, colored by modeled contrail risk, with the aircraft's current position"></canvas>
+            <canvas id="globeCanvas" class="hidden" role="img" aria-label="3D globe view of the same flight route and risk data. Drag to rotate, scroll to zoom." tabindex="0"></canvas>
+            <div class="scope-hud" aria-hidden="true">
+              <div>ALT&nbsp; <span class="hud-alt" id="hudAlt">—</span></div>
+              <div>UTC&nbsp; <span id="hudTime">—</span></div>
+              <div>RISK&nbsp; <span id="hudRisk">—</span></div>
+            </div>
+            <div class="scope-legend" aria-hidden="true">
+              <span><span class="legend-swatch" style="background:var(--actual)"></span>actual</span>
+              <span><span class="legend-swatch" style="background:var(--warn)"></span>critical window</span>
+              <span id="legendCf" class="hidden"><span class="legend-swatch" style="background:var(--counterfactual);border-top:2px dashed var(--counterfactual);background:transparent;"></span>counterfactual</span>
+              <span id="legendSat" class="hidden"><span class="legend-swatch" style="background:var(--sat);"></span>satellite (synthetic)</span>
+            </div>
+          </div>
+
+          <div class="transport" role="group" aria-label="Replay controls">
+            <button class="transport-btn" id="restartBtn" aria-label="Restart replay from the beginning">
+              <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.546 2.914" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M2 2v4h4" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>
+            </button>
+            <button class="transport-btn" id="playBtn" aria-label="Play replay" aria-pressed="false"></button>
+            <div class="timeline-wrap">
+              <div class="timeline-track" id="timelineTrack" aria-hidden="true">
+                <div class="timeline-fill" id="timelineFill"></div>
+              </div>
+              <div class="timeline-thumb" id="timelineThumb" aria-hidden="true"></div>
+              <input type="range" class="timeline-input" id="timelineInput" min="0" max="100" value="0" aria-label="Flight replay position" />
+            </div>
+            <span class="time-readout" id="timeReadout" aria-live="polite">—</span>
+          </div>
+
+          <div class="panel alt-chart-wrap">
+            <div class="panel-title">Altitude profile <button class="btn btn-ghost btn-sm" id="jumpCriticalBtn">Jump to critical window</button></div>
+            <svg id="altChart" role="img" aria-label="Altitude profile of the flight over time, with the critical contrail-sensitive window shaded"></svg>
+          </div>
+
+          <div class="panel" id="whatIfPanelHost"><!-- Phase 2 --></div>
+          <div class="panel hidden" id="resultPanelHost" aria-live="polite"><!-- Phase 2 --></div>
+        </div>
+
+        <!-- RIGHT: analysis drawer -->
+        <div>
+          <div class="panel">
+            <div class="panel-title">Where did it matter?</div>
+            <div id="criticalWindowPanel"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Atmospheric conditions <span class="dim mono" style="font-size:10px;">at cursor</span></div>
+            <div id="atmoPanel" aria-live="polite"></div>
+          </div>
+          <div class="panel hidden" id="paretoTeaserHost"><!-- Phase 3 --></div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        Experimental counterfactual analysis prototype — modeled, estimated, not flight-dispatch guidance. <a href="#" id="howItWorksBtn2">Methodology &amp; limitations</a>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <!-- ================= PARETO OVERLAY ================= -->
+  <div class="modal-backdrop" id="paretoBackdrop" role="dialog" aria-modal="true" aria-labelledby="paretoTitle">
+    <div class="modal-box pareto-box">
+      <div class="modal-header">
+        <h3 id="paretoTitle">The tradeoff</h3>
+        <button class="modal-close" id="paretoClose" aria-label="Close tradeoff view">&times;</button>
+      </div>
+      <div class="pareto-header">
+        <p>Every point is a different possible flight — one generated altitude strategy, replayed against the same atmosphere. There is no free option: reducing modeled contrail impact costs fuel, CO&sub2;, and time. Click any point to inspect it.</p>
+      </div>
+      <div class="pareto-chart-wrap">
+        <svg id="paretoSvg" role="img" aria-label="Scatter plot of generated flight alternatives: operational cost in kilograms of fuel on a log scale versus modeled contrail impact reduction. Points can be clicked to inspect."></svg>
+        <div class="pareto-tooltip" id="paretoTooltip"></div>
+      </div>
+      <div class="pareto-legend-row" aria-hidden="true">
+        <span><span class="dot-sw" style="background:var(--text-2);"></span>dominated alternative</span>
+        <span><span class="dot-sw" style="background:var(--accent);"></span>non-dominated (Pareto frontier)</span>
+        <span><span class="dot-sw" style="background:var(--good);"></span>high-leverage (knee)</span>
+        <span><span class="dot-sw" style="background:var(--bad);"></span>baseline (actual flight)</span>
+      </div>
+      <div class="pareto-knee-callout" id="paretoKneeCallout"></div>
+    </div>
+  </div>
+
+  <!-- ================= EXPLANATION MODAL ================= -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">How this was calculated</h3>
+        <button class="modal-close" id="modalClose" aria-label="Close explanation">&times;</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script id="engine-bundle">"use strict";
+(() => {
+  var __defProp = Object.defineProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+
+  // src/utils/geo.ts
+  var EARTH_RADIUS_M = 6371e3;
+  function toRad(deg) {
+    return deg * Math.PI / 180;
+  }
+  function toDeg(rad) {
+    return rad * 180 / Math.PI;
+  }
+  function haversineMeters(lat1, lon1, lat2, lon2) {
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return EARTH_RADIUS_M * c;
+  }
+  function greatCircleInterpolate(lat1, lon1, lat2, lon2, fraction) {
+    const phi1 = toRad(lat1);
+    const lambda1 = toRad(lon1);
+    const phi2 = toRad(lat2);
+    const lambda2 = toRad(lon2);
+    const dLat = phi2 - phi1;
+    const dLon = lambda2 - lambda1;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon / 2) ** 2;
+    const angularDistance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    if (angularDistance === 0) {
+      return { latitude: lat1, longitude: lon1 };
+    }
+    const A = Math.sin((1 - fraction) * angularDistance) / Math.sin(angularDistance);
+    const B = Math.sin(fraction * angularDistance) / Math.sin(angularDistance);
+    const x = A * Math.cos(phi1) * Math.cos(lambda1) + B * Math.cos(phi2) * Math.cos(lambda2);
+    const y = A * Math.cos(phi1) * Math.sin(lambda1) + B * Math.cos(phi2) * Math.sin(lambda2);
+    const z = A * Math.sin(phi1) + B * Math.sin(phi2);
+    const phi3 = Math.atan2(z, Math.sqrt(x * x + y * y));
+    const lambda3 = Math.atan2(y, x);
+    return { latitude: toDeg(phi3), longitude: toDeg(lambda3) };
+  }
+  function isaTemperatureK(altitudeFt) {
+    const altitudeM = altitudeFt * 0.3048;
+    const TROPOPAUSE_M = 11e3;
+    const SEA_LEVEL_TEMP_K = 288.15;
+    const LAPSE_RATE_K_PER_M = 65e-4;
+    const TROPOPAUSE_TEMP_K = SEA_LEVEL_TEMP_K - LAPSE_RATE_K_PER_M * TROPOPAUSE_M;
+    if (altitudeM <= TROPOPAUSE_M) {
+      return SEA_LEVEL_TEMP_K - LAPSE_RATE_K_PER_M * altitudeM;
+    }
+    return TROPOPAUSE_TEMP_K;
+  }
+  function hashNoise(...values) {
+    let h = 2166136261;
+    for (const v of values) {
+      const bits = Math.floor(v * 1e3);
+      h ^= bits;
+      h = Math.imul(h, 16777619);
+    }
+    h ^= h >>> 15;
+    h = Math.imul(h, 2246822519);
+    h ^= h >>> 13;
+    h = Math.imul(h, 3266489917);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+
+  // src/science/trajectory.ts
+  var MAX_PLAUSIBLE_GROUND_SPEED_KTS = 700;
+  function cleanTrajectory(raw) {
+    const sorted = [...raw].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const points = [];
+    let droppedDuplicates = 0;
+    const flaggedOutliers = [];
+    for (const point of sorted) {
+      const prev = points[points.length - 1];
+      if (prev && prev.timestamp === point.timestamp) {
+        droppedDuplicates++;
+        continue;
+      }
+      if (prev) {
+        const dtSec = (new Date(point.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 1e3;
+        if (dtSec > 0) {
+          const distM = haversineMeters(prev.latitude, prev.longitude, point.latitude, point.longitude);
+          const impliedSpeedKts = distM / dtSec * 1.94384;
+          if (impliedSpeedKts > MAX_PLAUSIBLE_GROUND_SPEED_KTS) {
+            flaggedOutliers.push({ index: points.length, impliedSpeedKts });
+          }
+          prev.sourceResolutionSec = dtSec;
+        }
+      }
+      points.push({ ...point, interpolated: false });
+    }
+    return { points, droppedDuplicates, flaggedOutliers };
+  }
+
+  // src/science/criticalWindow.ts
+  function detectCriticalWindows(annotated, options = {}) {
+    const minDurationSec = options.minDurationSec ?? 300;
+    const maxDurationFraction = options.maxDurationFraction ?? 0.5;
+    const targetShare = options.targetShare ?? 0.4;
+    const positiveForcings = annotated.map((a) => {
+      const ef = a.sample?.segmentEnergyForcingJ;
+      return ef !== null && ef !== void 0 && ef > 0 ? ef : 0;
+    });
+    const totalPositive = positiveForcings.reduce((s, v) => s + v, 0);
+    if (totalPositive <= 0 || annotated.length < 2) {
+      return [];
+    }
+    const firstTs = new Date(annotated[0].point.timestamp).getTime();
+    const lastTs = new Date(annotated[annotated.length - 1].point.timestamp).getTime();
+    const totalDurationSec = (lastTs - firstTs) / 1e3;
+    const maxDurationSec = totalDurationSec * maxDurationFraction;
+    const prefix = new Array(positiveForcings.length + 1).fill(0);
+    for (let i = 0; i < positiveForcings.length; i++) {
+      prefix[i + 1] = prefix[i] + positiveForcings[i];
+    }
+    const timestamps = annotated.map((a) => new Date(a.point.timestamp).getTime());
+    let best = null;
+    for (let start = 0; start < annotated.length - 1; start++) {
+      for (let end = start + 1; end < annotated.length; end++) {
+        const durationSec = (timestamps[end] - timestamps[start]) / 1e3;
+        if (durationSec < minDurationSec) continue;
+        if (durationSec > maxDurationSec) break;
+        const sum = prefix[end + 1] - prefix[start];
+        const share = sum / totalPositive;
+        if (share < targetShare) continue;
+        if (!best || durationSec < best.durationSec || durationSec === best.durationSec && sum > best.sum) {
+          best = { start, end, sum, durationSec };
+        }
+        break;
+      }
+    }
+    if (!best) {
+      for (let start = 0; start < annotated.length - 1; start++) {
+        for (let end = start + 1; end < annotated.length; end++) {
+          const durationSec = (timestamps[end] - timestamps[start]) / 1e3;
+          if (durationSec < minDurationSec) continue;
+          if (durationSec > maxDurationSec) break;
+          const sum = prefix[end + 1] - prefix[start];
+          if (!best || sum > best.sum) {
+            best = { start, end, sum, durationSec };
+          }
+        }
+      }
+    }
+    if (!best) return [];
+    const windowConfidences = annotated.slice(best.start, best.end + 1).map((a) => a.sample?.confidence ?? "low");
+    const confidence = windowConfidences.includes("low") ? "low" : windowConfidences.includes("medium") ? "medium" : "high";
+    return [
+      {
+        startTimestamp: annotated[best.start].point.timestamp,
+        endTimestamp: annotated[best.end].point.timestamp,
+        startIndex: best.start,
+        endIndex: best.end,
+        durationSec: best.durationSec,
+        totalPositiveEnergyForcingJ: best.sum,
+        shareOfFlightImpact: best.sum / totalPositive,
+        confidence
+      }
+    ];
+  }
+
+  // src/science/impact.ts
+  function totalEnergyForcingJ(annotated) {
+    return annotated.reduce((sum, a) => {
+      const ef = a.sample?.segmentEnergyForcingJ;
+      return sum + (ef ?? 0);
+    }, 0);
+  }
+  function rollupConfidence(annotated) {
+    const seen = new Set(annotated.map((a) => a.sample?.confidence ?? "low"));
+    if (seen.has("low")) return "low";
+    if (seen.has("medium")) return "medium";
+    return "high";
+  }
+  function missingDataFraction(annotated) {
+    if (annotated.length === 0) return 0;
+    const missing = annotated.filter((a) => a.sample === null).length;
+    return missing / annotated.length;
+  }
+
+  // src/science/pareto.ts
+  function buildTradeoffPoints(counterfactuals) {
+    const points = counterfactuals.map((cf) => ({
+      counterfactualId: cf.id,
+      operationalCost: Math.abs(cf.estimatedFuelDeltaKg),
+      contrailBenefit: cf.impactReduction,
+      uncertainty: cf.uncertainty.level,
+      strategy: cf.strategy,
+      isNonDominated: false,
+      isKneePoint: false
+    }));
+    markNonDominated(points);
+    markKneePoint(points);
+    return points;
+  }
+  function markNonDominated(points) {
+    for (const p of points) {
+      p.isNonDominated = !points.some(
+        (other) => other !== p && other.operationalCost <= p.operationalCost && other.contrailBenefit >= p.contrailBenefit && (other.operationalCost < p.operationalCost || other.contrailBenefit > p.contrailBenefit)
+      );
+    }
+  }
+  function markKneePoint(points) {
+    const frontier = points.filter((p) => p.isNonDominated);
+    if (frontier.length === 0) return;
+    if (frontier.length === 1) {
+      frontier[0].isKneePoint = true;
+      return;
+    }
+    const costs = frontier.map((p) => p.operationalCost);
+    const benefits = frontier.map((p) => p.contrailBenefit);
+    const minCost = Math.min(...costs);
+    const maxCost = Math.max(...costs);
+    const minBenefit = Math.min(...benefits);
+    const maxBenefit = Math.max(...benefits);
+    const costRange = maxCost - minCost || 1;
+    const benefitRange = maxBenefit - minBenefit || 1;
+    let best = null;
+    let bestScore = -Infinity;
+    for (const p of frontier) {
+      const normCost = (p.operationalCost - minCost) / costRange;
+      const normBenefit = (p.contrailBenefit - minBenefit) / benefitRange;
+      const score = normBenefit - normCost;
+      if (score > bestScore) {
+        bestScore = score;
+        best = p;
+      }
+    }
+    if (best) best.isKneePoint = true;
+  }
+
+  // src/simulation/altitudeProfile.ts
+  var DEFAULT_KINEMATIC_ASSUMPTIONS = {
+    climbRateFtPerMin: 800,
+    // step-climb rate at cruise altitude, conservative
+    descentRateFtPerMin: 1500,
+    // cruise-altitude step-descent, conservative
+    /** Absolute altitude bounds outside which we refuse to generate a counterfactual. */
+    minAltitudeFt: 28e3,
+    maxAltitudeFt: 43e3
+  };
+  function applyAltitudeWindow(points, window, kinematics = DEFAULT_KINEMATIC_ASSUMPTIONS) {
+    const notes = [];
+    const rateFtPerMin = window.offsetFt < 0 ? kinematics.descentRateFtPerMin : kinematics.climbRateFtPerMin;
+    const transitionSec = Math.abs(window.offsetFt) / rateFtPerMin * 60;
+    const times = points.map((p) => new Date(p.timestamp).getTime() / 1e3);
+    const startTime = times[window.startIndex];
+    const endTime = times[window.endIndex];
+    const rampInStart = startTime - transitionSec;
+    const rampOutEnd = endTime + transitionSec;
+    let withinKinematicLimits = true;
+    if (rampInStart < times[0]) {
+      withinKinematicLimits = false;
+      notes.push(
+        "Requested altitude change cannot complete before the critical window begins at the assumed transition rate; ramp is truncated to the start of the available trajectory."
+      );
+    }
+    if (!window.permanent && rampOutEnd > times[times.length - 1]) {
+      withinKinematicLimits = false;
+      notes.push(
+        "Requested return-to-cruise cannot complete before the trajectory ends at the assumed transition rate; ramp is truncated to the end of the available trajectory."
+      );
+    }
+    const altitudes = points.map((point, i) => {
+      const base = point.altitudeFt;
+      const t = times[i];
+      if (t < Math.max(rampInStart, times[0])) {
+        return base;
+      }
+      if (t >= Math.max(rampInStart, times[0]) && t < startTime) {
+        const denom = startTime - Math.max(rampInStart, times[0]);
+        const fraction = denom > 0 ? (t - Math.max(rampInStart, times[0])) / denom : 1;
+        return base + fraction * window.offsetFt;
+      }
+      if (t >= startTime && t <= endTime) {
+        return base + window.offsetFt;
+      }
+      if (window.permanent) {
+        return base + window.offsetFt;
+      }
+      const rampOutEndClamped2 = Math.min(rampOutEnd, times[times.length - 1]);
+      if (t > endTime && t <= rampOutEndClamped2) {
+        const denom = rampOutEndClamped2 - endTime;
+        const fraction = denom > 0 ? (t - endTime) / denom : 1;
+        return base + (1 - fraction) * window.offsetFt;
+      }
+      return base;
+    });
+    const rampInStartClamped = Math.max(rampInStart, times[0]);
+    const rampOutEndClamped = window.permanent ? times[times.length - 1] : Math.min(rampOutEnd, times[times.length - 1]);
+    const affectedAltitudes = altitudes.filter((_, i) => {
+      const t = times[i];
+      return t >= rampInStartClamped && t <= rampOutEndClamped;
+    });
+    const minAlt = Math.min(...affectedAltitudes);
+    const maxAlt = Math.max(...affectedAltitudes);
+    const withinServiceCeiling = minAlt >= kinematics.minAltitudeFt && maxAlt <= kinematics.maxAltitudeFt;
+    if (!withinServiceCeiling) {
+      notes.push(
+        `Resulting altitude range [${Math.round(minAlt)}, ${Math.round(maxAlt)}] ft exceeds the assumed service ceiling bounds [${kinematics.minAltitudeFt}, ${kinematics.maxAltitudeFt}] ft for this aircraft class.`
+      );
+    }
+    return {
+      altitudes,
+      feasibility: { withinServiceCeiling, withinKinematicLimits, notes }
+    };
+  }
+  function findCruiseRange(points, minAltitudeFt = 15e3, maxVerticalRateFtPerMin = 150) {
+    const rates = new Array(points.length).fill(0);
+    for (let i = 1; i < points.length; i++) {
+      const dtMin = (new Date(points[i].timestamp).getTime() - new Date(points[i - 1].timestamp).getTime()) / 6e4;
+      rates[i] = dtMin > 0 ? (points[i].altitudeFt - points[i - 1].altitudeFt) / dtMin : 0;
+    }
+    let start = -1;
+    let end = -1;
+    points.forEach((p, i) => {
+      const isLevel = Math.abs(rates[i]) <= maxVerticalRateFtPerMin;
+      if (p.altitudeFt >= minAltitudeFt && isLevel) {
+        if (start === -1) start = i;
+        end = i;
+      }
+    });
+    if (start === -1) return null;
+    return { startIndex: start, endIndex: end };
+  }
+
+  // src/models/aircraftCatalog.ts
+  var AIRCRAFT_CATALOG = {
+    B789: {
+      icaoType: "B789",
+      displayName: "Boeing 787-9",
+      aircraftClass: "widebody",
+      referenceMassKg: 254e3,
+      typicalCruiseMassKg: 19e4,
+      typicalCruiseTasKts: 488,
+      source: "public-documentation"
+    },
+    A20N: {
+      icaoType: "A20N",
+      displayName: "Airbus A320neo",
+      aircraftClass: "narrowbody",
+      referenceMassKg: 79e3,
+      typicalCruiseMassKg: 68e3,
+      typicalCruiseTasKts: 447,
+      source: "public-documentation"
+    },
+    E190: {
+      icaoType: "E190",
+      displayName: "Embraer E190",
+      aircraftClass: "regional",
+      referenceMassKg: 51800,
+      typicalCruiseMassKg: 42e3,
+      typicalCruiseTasKts: 420,
+      source: "public-documentation"
+    }
+  };
+  var TYPICAL_CRUISE_FUEL_FLOW_KG_PER_HOUR = {
+    widebody: 5600,
+    narrowbody: 2450,
+    regional: 1500
+  };
+  var JET_FUEL_CO2_FACTOR_KG_PER_KG = 3.16;
+
+  // src/simulation/operationalCost.ts
+  var FUEL_PENALTY_K_PER_1000FT_SQUARED = 6e-3;
+  var GAMMA_AIR = 1.4;
+  var R_SPECIFIC_AIR = 287.05;
+  function speedOfSoundMs(temperatureK) {
+    return Math.sqrt(GAMMA_AIR * R_SPECIFIC_AIR * temperatureK);
+  }
+  function estimateOperationalCost(baseline, counterfactual, aircraft) {
+    if (baseline.length !== counterfactual.length) {
+      throw new Error("baseline and counterfactual trajectories must have matching waypoint counts");
+    }
+    const baseFuelFlowKgPerSec = TYPICAL_CRUISE_FUEL_FLOW_KG_PER_HOUR[aircraft.aircraftClass] / 3600;
+    let fuelDeltaKg = 0;
+    let timeDeltaSec = 0;
+    for (let i = 0; i < baseline.length - 1; i++) {
+      const b0 = baseline[i];
+      const b1 = baseline[i + 1];
+      const c0 = counterfactual[i];
+      const c1 = counterfactual[i + 1];
+      const dtSec = (new Date(b1.timestamp).getTime() - new Date(b0.timestamp).getTime()) / 1e3;
+      if (dtSec <= 0) continue;
+      const offsetFt = (c0.altitudeFt - b0.altitudeFt + (c1.altitudeFt - b1.altitudeFt)) / 2;
+      if (offsetFt === 0) continue;
+      const penaltyFraction = FUEL_PENALTY_K_PER_1000FT_SQUARED * (offsetFt / 1e3) ** 2;
+      fuelDeltaKg += baseFuelFlowKgPerSec * dtSec * penaltyFraction;
+      const baseTasKts = b0.groundSpeedKts ?? aircraft.typicalCruiseTasKts;
+      const baseTempK = isaTemperatureK(b0.altitudeFt);
+      const newTempK = isaTemperatureK(c0.altitudeFt);
+      const mach = baseTasKts * 0.514444 / speedOfSoundMs(baseTempK);
+      const newTasMs = mach * speedOfSoundMs(newTempK);
+      const newTasKts = newTasMs / 0.514444;
+      if (newTasKts > 0) {
+        const segmentDistanceNm = baseTasKts * dtSec / 3600;
+        const baseSegTimeSec = dtSec;
+        const newSegTimeSec = segmentDistanceNm / newTasKts * 3600;
+        timeDeltaSec += newSegTimeSec - baseSegTimeSec;
+      }
+    }
+    const co2DeltaKg = fuelDeltaKg * JET_FUEL_CO2_FACTOR_KG_PER_KG;
+    return {
+      fuelDeltaKg,
+      co2DeltaKg,
+      timeDeltaSec,
+      assumptions: [
+        "Fuel-flow penalty is a simplified parabolic approximation around the flight's actual recorded altitude, not a certified aircraft performance model.",
+        "Time delta assumes a constant cruise Mach number and ICAO Standard Atmosphere temperatures; wind is not modeled.",
+        `CO2 delta uses the standard ${JET_FUEL_CO2_FACTOR_KG_PER_KG} kg CO2 per kg jet fuel combustion factor.`
+      ]
+    };
+  }
+
+  // src/simulation/counterfactualEngine.ts
+  function windowSpecFor(baseline, strategy, criticalWindows) {
+    const { kind, altitudeOffsetFt, windowIndex } = strategy;
+    if (kind === "full-flight-offset") {
+      const cruise = findCruiseRange(baseline);
+      if (!cruise) {
+        throw new Error("Cannot apply a full-flight offset: no cruise-altitude segment found.");
+      }
+      return { startIndex: cruise.startIndex, endIndex: cruise.endIndex, offsetFt: altitudeOffsetFt, permanent: false };
+    }
+    const cw = criticalWindows[windowIndex ?? 0];
+    if (!cw) {
+      throw new Error("Localized strategy requires a valid critical window index.");
+    }
+    switch (kind) {
+      case "critical-window-descent":
+        return { startIndex: cw.startIndex, endIndex: cw.endIndex, offsetFt: -Math.abs(altitudeOffsetFt), permanent: false };
+      case "critical-window-climb":
+        return { startIndex: cw.startIndex, endIndex: cw.endIndex, offsetFt: Math.abs(altitudeOffsetFt), permanent: false };
+      case "return-to-cruise": {
+        const marginIndices = Math.max(2, Math.round((cw.endIndex - cw.startIndex) * 0.5));
+        const startIndex = Math.max(0, cw.startIndex - marginIndices);
+        const endIndex = Math.min(baseline.length - 1, cw.endIndex + marginIndices);
+        return { startIndex, endIndex, offsetFt: altitudeOffsetFt, permanent: false };
+      }
+      case "multi-step-profile": {
+        return { startIndex: cw.startIndex, endIndex: cw.endIndex, offsetFt: altitudeOffsetFt, permanent: false };
+      }
+      default:
+        throw new Error(`Unhandled strategy kind: ${kind}`);
+    }
+  }
+  async function generateCounterfactual(flightId, baselineAnnotated, aircraft, strategy, criticalWindows, provider, options = {}) {
+    const baseline = baselineAnnotated.map((a) => a.point);
+    const spec = windowSpecFor(baseline, strategy, criticalWindows);
+    let altitudes;
+    let feasibility;
+    if (strategy.kind === "multi-step-profile") {
+      const stage1 = applyAltitudeWindow(
+        baseline,
+        { ...spec, offsetFt: spec.offsetFt / 2 },
+        DEFAULT_KINEMATIC_ASSUMPTIONS
+      );
+      const stage1Trajectory = baseline.map((p, i) => ({ ...p, altitudeFt: stage1.altitudes[i] }));
+      const stage2 = applyAltitudeWindow(stage1Trajectory, spec, DEFAULT_KINEMATIC_ASSUMPTIONS);
+      altitudes = stage2.altitudes;
+      feasibility = {
+        withinServiceCeiling: stage1.feasibility.withinServiceCeiling && stage2.feasibility.withinServiceCeiling,
+        withinKinematicLimits: stage1.feasibility.withinKinematicLimits && stage2.feasibility.withinKinematicLimits,
+        notes: [...stage1.feasibility.notes, ...stage2.feasibility.notes]
+      };
+    } else {
+      const result = applyAltitudeWindow(baseline, spec, DEFAULT_KINEMATIC_ASSUMPTIONS);
+      altitudes = result.altitudes;
+      feasibility = result.feasibility;
+    }
+    const modifiedTrajectory = baseline.map((p, i) => ({
+      ...p,
+      altitudeFt: altitudes[i],
+      interpolated: false
+    }));
+    if (!feasibility.withinServiceCeiling || !feasibility.withinKinematicLimits) {
+    }
+    const samples = await provider.sampleTrajectory(modifiedTrajectory);
+    const annotated = modifiedTrajectory.map((point, i) => ({
+      point,
+      sample: samples[i] ?? null
+    }));
+    const baselineImpactJ = totalEnergyForcingJ(baselineAnnotated);
+    const contrailImpactJ = totalEnergyForcingJ(annotated);
+    const impactReduction = baselineImpactJ !== 0 ? (baselineImpactJ - contrailImpactJ) / Math.abs(baselineImpactJ) : 0;
+    const cost = estimateOperationalCost(baseline, modifiedTrajectory, aircraft);
+    const missingFraction = Math.max(missingDataFraction(baselineAnnotated), missingDataFraction(annotated));
+    const confidenceReasons = [
+      "Atmospheric field is a synthetic demo approximation, not a live weather model run (see demo-data/README.md).",
+      "Fuel/time deltas use a simplified operational model (see src/simulation/operationalCost.ts).",
+      "Trajectory interpolation resolution follows the original observation cadence."
+    ];
+    if (missingFraction > 0) {
+      confidenceReasons.push(`${Math.round(missingFraction * 100)}% of waypoints had no atmospheric sample available.`);
+    }
+    const uncertaintyLevel = missingFraction > 0.1 || rollupConfidence(annotated) === "low" ? "high" : rollupConfidence(annotated) === "medium" ? "medium" : "low";
+    return {
+      id: `${options.idPrefix ?? "cf"}-${strategy.kind}-${strategy.altitudeOffsetFt}-${Date.now()}`,
+      flightId,
+      strategy,
+      modifiedTrajectory,
+      altitudeProfileFt: altitudes,
+      annotated,
+      baselineImpactJ,
+      contrailImpactJ,
+      impactReduction,
+      estimatedFuelDeltaKg: cost.fuelDeltaKg,
+      estimatedCO2DeltaKg: cost.co2DeltaKg,
+      estimatedTimeDeltaSec: cost.timeDeltaSec,
+      uncertainty: { level: uncertaintyLevel, reasons: confidenceReasons },
+      feasibilityFlags: feasibility
+    };
+  }
+
+  // src/science/pipeline.ts
+  function standardStrategySet(windowIndex) {
+    const offsets = [-4e3, -2e3, -1e3, 1e3, 2e3, 4e3];
+    const strategies = [];
+    for (const offsetFt of offsets) {
+      strategies.push({ kind: "full-flight-offset", altitudeOffsetFt: offsetFt });
+      strategies.push({
+        kind: offsetFt < 0 ? "critical-window-descent" : "critical-window-climb",
+        altitudeOffsetFt: offsetFt,
+        windowIndex
+      });
+    }
+    strategies.push({ kind: "return-to-cruise", altitudeOffsetFt: -2e3, windowIndex });
+    strategies.push({ kind: "return-to-cruise", altitudeOffsetFt: -4e3, windowIndex });
+    strategies.push({ kind: "multi-step-profile", altitudeOffsetFt: -4e3, windowIndex });
+    return strategies;
+  }
+  async function analyzeFlight(flight, provider) {
+    const { points: cleanedPoints } = cleanTrajectory(flight.trajectory);
+    const samples = await provider.sampleTrajectory(cleanedPoints);
+    const baselineAnnotated = cleanedPoints.map((point, i) => ({
+      point,
+      sample: samples[i] ?? null
+    }));
+    const baselineTotalImpactJ = totalEnergyForcingJ(baselineAnnotated);
+    const criticalWindows = detectCriticalWindows(baselineAnnotated);
+    const counterfactuals = [];
+    if (criticalWindows.length > 0) {
+      const strategies = standardStrategySet(0);
+      for (const strategy of strategies) {
+        try {
+          const cf = await generateCounterfactual(
+            flight.id,
+            baselineAnnotated,
+            flight.aircraft,
+            strategy,
+            criticalWindows,
+            provider,
+            { idPrefix: flight.id }
+          );
+          counterfactuals.push(cf);
+        } catch (err) {
+          console.warn(`Skipping infeasible strategy ${strategy.kind}/${strategy.altitudeOffsetFt}ft: ${err.message}`);
+        }
+      }
+    }
+    const tradeoffPoints = buildTradeoffPoints(counterfactuals);
+    return {
+      flight: { ...flight, trajectory: cleanedPoints },
+      baselineAnnotated,
+      baselineTotalImpactJ,
+      criticalWindows,
+      counterfactuals,
+      tradeoffPoints
+    };
+  }
+
+  // src/science/atmosphericField.ts
+  var EF_PERCENTILE_TABLE = [
+    [1, -639e6],
+    [5, -195e6],
+    [10, -693e5],
+    [15, -245e5],
+    [20, -778e4],
+    [25, -269e4],
+    [30, -147e4],
+    [35, -274e3],
+    [40, 905e3],
+    [45, 631e4],
+    [50, 174e5],
+    [55, 372e5],
+    [60, 706e5],
+    [65, 123e6],
+    [70, 2e8],
+    [75, 307e6],
+    [80, 457e6],
+    [85, 672e6],
+    [90, 101e7],
+    [95, 163e7],
+    [99, 314e7]
+  ];
+  function efPerMeterAtPercentile(percentile) {
+    const p = Math.max(1, Math.min(99, percentile));
+    for (let i = 0; i < EF_PERCENTILE_TABLE.length - 1; i++) {
+      const [p0, v0] = EF_PERCENTILE_TABLE[i];
+      const [p1, v1] = EF_PERCENTILE_TABLE[i + 1];
+      if (p >= p0 && p <= p1) {
+        const t = (p - p0) / (p1 - p0);
+        return v0 + t * (v1 - v0);
+      }
+    }
+    return EF_PERCENTILE_TABLE[EF_PERCENTILE_TABLE.length - 1][1];
+  }
+  var SyntheticAtmosphericField = class {
+    constructor(patches) {
+      __publicField(this, "patches", patches);
+    }
+    patchIntensityAt(lat, lon, flightLevel, timestamp) {
+      const t = new Date(timestamp).getTime();
+      let total = 0;
+      for (const patch of this.patches) {
+        const refT = new Date(patch.referenceTime).getTime();
+        const hoursElapsed = (t - refT) / 36e5;
+        const centerLat = patch.lat0 + patch.latDriftPerHour * hoursElapsed;
+        const centerLon = patch.lon0 + patch.lonDriftPerHour * hoursElapsed;
+        const distKm = haversineMeters(lat, lon, centerLat, centerLon) / 1e3;
+        const horizontal = Math.exp(-(distKm ** 2) / (2 * patch.horizontalSigmaKm ** 2));
+        const flDelta = flightLevel - patch.centerFlightLevel;
+        const vertical = Math.exp(-(flDelta ** 2) / (2 * patch.verticalSigmaFl ** 2));
+        total += patch.peakIntensity * horizontal * vertical;
+      }
+      return total;
+    }
+    sample(lat, lon, altitudeFt, timestamp) {
+      const flightLevel = Math.round(altitudeFt / 100 / 10) * 10;
+      const moistureIndex = this.patchIntensityAt(lat, lon, flightLevel, timestamp);
+      const jitter = (hashNoise(lat * 100, lon * 100, flightLevel, new Date(timestamp).getTime() / 6e4) - 0.5) * 0.06;
+      const clampedMoisture = Math.max(0, Math.min(1.3, moistureIndex + jitter));
+      const baseTempK = isaTemperatureK(altitudeFt);
+      const temperatureK = baseTempK - 3.5 * Math.min(1, clampedMoisture);
+      const relativeHumidityIcePct = 28 + clampedMoisture * 95;
+      const sac = temperatureK < 235 ? 1 : 0;
+      const issr = relativeHumidityIcePct > 100 ? 1 : 0;
+      let persistentContrailProbability = 0;
+      if (sac === 1) {
+        const margin = (relativeHumidityIcePct - 92) / 30;
+        persistentContrailProbability = Math.max(0, Math.min(1, margin));
+      }
+      let segmentEnergyForcingJPerMeter = null;
+      if (persistentContrailProbability > 0.05) {
+        const roll = hashNoise(lat * 37, lon * 41, flightLevel * 3, new Date(timestamp).getTime() / 3e5);
+        const skew = 1 + 2.5 * persistentContrailProbability;
+        const percentile = 100 * (1 - (1 - roll) ** skew);
+        segmentEnergyForcingJPerMeter = efPerMeterAtPercentile(percentile);
+      }
+      const confidence = clampedMoisture > 0.15 && clampedMoisture < 0.95 ? "low" : "medium";
+      return {
+        timestamp,
+        latitude: lat,
+        longitude: lon,
+        flightLevel,
+        temperatureK,
+        relativeHumidityIcePct,
+        sac,
+        issr,
+        persistentContrailProbability: sac === 1 ? persistentContrailProbability : null,
+        // segmentEnergyForcingJ is finalized by the caller once segment length
+        // is known (energy forcing is a per-segment, not per-point, quantity -
+        // see https://apidocs.contrails.org/ef-interpretation.html). We stash
+        // the per-meter figure in a side channel via the return value below.
+        segmentEnergyForcingJ: segmentEnergyForcingJPerMeter,
+        confidence
+      };
+    }
+  };
+  function defaultNorthAtlanticPatches(referenceTime) {
+    return [
+      {
+        lat0: 52.5,
+        lon0: -35,
+        latDriftPerHour: 0.15,
+        lonDriftPerHour: 0.8,
+        centerFlightLevel: 350,
+        verticalSigmaFl: 18,
+        horizontalSigmaKm: 260,
+        referenceTime,
+        peakIntensity: 1.15
+      },
+      {
+        lat0: 47,
+        lon0: -60,
+        latDriftPerHour: -0.05,
+        lonDriftPerHour: 0.6,
+        centerFlightLevel: 310,
+        verticalSigmaFl: 22,
+        horizontalSigmaKm: 200,
+        referenceTime,
+        peakIntensity: 0.55
+      }
+    ];
+  }
+
+  // src/data/providers/demoDatasetProvider.ts
+  var DemoDatasetProvider = class {
+    constructor(referenceTime) {
+      __publicField(this, "id", "demo-dataset");
+      __publicField(this, "field");
+      this.field = new SyntheticAtmosphericField(defaultNorthAtlanticPatches(referenceTime));
+    }
+    async isAvailable() {
+      return true;
+    }
+    async sampleTrajectory(points) {
+      return points.map((point, i) => {
+        const raw = this.field.sample(point.latitude, point.longitude, point.altitudeFt, point.timestamp);
+        let segmentEnergyForcingJ = null;
+        if (raw.segmentEnergyForcingJ !== null) {
+          const next = points[i + 1];
+          const segmentLengthM = next ? haversineMeters(point.latitude, point.longitude, next.latitude, next.longitude) : 0;
+          segmentEnergyForcingJ = raw.segmentEnergyForcingJ * segmentLengthM;
+        }
+        const sample = {
+          ...raw,
+          segmentEnergyForcingJ,
+          providerId: this.id
+        };
+        return sample;
+      });
+    }
+  };
+
+  // src/data/demoFlights.ts
+  function buildTrajectory(spec) {
+    const { origin, destination, departureTime, totalDurationSec, phases, samplingIntervalSec } = spec;
+    const depTimeMs = new Date(departureTime).getTime();
+    const totalRouteDistanceM = haversineMeters(origin.lat, origin.lon, destination.lat, destination.lon);
+    const stepCount = Math.floor(totalDurationSec / samplingIntervalSec) + 1;
+    const rawDistances = [0];
+    const altitudes = [];
+    const speeds = [];
+    let prevAltitudeFt = 0;
+    let phaseStartFraction = 0;
+    let phaseStartAltitudeFt = 0;
+    for (let i = 0; i < stepCount; i++) {
+      const tSec = i * samplingIntervalSec;
+      const fraction = tSec / totalDurationSec;
+      let phase = phases[0];
+      let cumulativeStart = 0;
+      for (const p of phases) {
+        if (fraction <= p.endFraction || p === phases[phases.length - 1]) {
+          phase = p;
+          break;
+        }
+        cumulativeStart = p.endFraction;
+      }
+      if (fraction > phaseStartFraction && phases.indexOf(phase) > 0) {
+      }
+      const phaseIndex = phases.indexOf(phase);
+      const prevPhaseEndFraction = phaseIndex === 0 ? 0 : phases[phaseIndex - 1].endFraction;
+      const prevPhaseEndAltitude = phaseIndex === 0 ? 0 : phases[phaseIndex - 1].endAltitudeFt;
+      const phaseFraction = phase.endFraction > prevPhaseEndFraction ? (fraction - prevPhaseEndFraction) / (phase.endFraction - prevPhaseEndFraction) : 1;
+      const clampedPhaseFraction = Math.max(0, Math.min(1, phaseFraction));
+      const eased = clampedPhaseFraction * clampedPhaseFraction * (3 - 2 * clampedPhaseFraction);
+      const altitudeFt = prevPhaseEndAltitude + eased * (phase.endAltitudeFt - prevPhaseEndAltitude);
+      altitudes.push(altitudeFt);
+      speeds.push(phase.groundSpeedKts);
+      prevAltitudeFt = altitudeFt;
+      if (i > 0) {
+        const dtSec = samplingIntervalSec;
+        const avgSpeedKts = (speeds[i] + speeds[i - 1]) / 2;
+        const distStepM = avgSpeedKts * 0.514444 * dtSec;
+        rawDistances.push(rawDistances[i - 1] + distStepM);
+      }
+    }
+    void prevAltitudeFt;
+    void phaseStartFraction;
+    void phaseStartAltitudeFt;
+    const rawTotal = rawDistances[rawDistances.length - 1];
+    const scale = totalRouteDistanceM / rawTotal;
+    const points = [];
+    for (let i = 0; i < stepCount; i++) {
+      const distanceFraction = rawDistances[i] * scale / totalRouteDistanceM;
+      const { latitude, longitude } = greatCircleInterpolate(
+        origin.lat,
+        origin.lon,
+        destination.lat,
+        destination.lon,
+        Math.max(0, Math.min(1, distanceFraction))
+      );
+      points.push({
+        timestamp: new Date(depTimeMs + i * samplingIntervalSec * 1e3).toISOString(),
+        latitude,
+        longitude,
+        altitudeFt: Math.round(altitudes[i]),
+        groundSpeedKts: Math.round(speeds[i]),
+        interpolated: false,
+        sourceResolutionSec: i < stepCount - 1 ? samplingIntervalSec : void 0
+      });
+    }
+    return points;
+  }
+  function buildFlight(spec) {
+    const trajectory = buildTrajectory(spec);
+    const arrivalTime = trajectory[trajectory.length - 1].timestamp;
+    return {
+      id: spec.id,
+      callsign: spec.callsign,
+      origin: spec.origin.iata,
+      destination: spec.destination.iata,
+      departureTime: spec.departureTime,
+      arrivalTime,
+      aircraft: AIRCRAFT_CATALOG[spec.aircraftIcaoType],
+      trajectory,
+      dataProvenance: {
+        source: "reconstructed-representative",
+        note: spec.provenanceNote
+      }
+    };
+  }
+  function buildDemoFlightJfkLhr() {
+    return buildFlight({
+      id: "demo-jfk-lhr-b789",
+      callsign: "DEMO101",
+      origin: { iata: "JFK", lat: 40.6413, lon: -73.7781 },
+      destination: { iata: "LHR", lat: 51.47, lon: -0.4543 },
+      departureTime: "2026-01-14T22:10:00Z",
+      // overnight eastbound departure, typical for this route
+      aircraftIcaoType: "B789",
+      totalDurationSec: 410 * 60,
+      // 6h50m, typical eastbound block time with jet-stream assist
+      samplingIntervalSec: 60,
+      phases: [
+        { endFraction: 28 / 410, endAltitudeFt: 34e3, groundSpeedKts: 340 },
+        // climb
+        { endFraction: 150 / 410, endAltitudeFt: 34e3, groundSpeedKts: 505 },
+        // cruise 1 (FL340)
+        { endFraction: 155 / 410, endAltitudeFt: 36e3, groundSpeedKts: 505 },
+        // step climb
+        { endFraction: 280 / 410, endAltitudeFt: 36e3, groundSpeedKts: 520 },
+        // cruise 2 (FL360) - through the patch
+        { endFraction: 285 / 410, endAltitudeFt: 38e3, groundSpeedKts: 520 },
+        // step climb
+        { endFraction: 380 / 410, endAltitudeFt: 38e3, groundSpeedKts: 500 },
+        // cruise 3 (FL380)
+        { endFraction: 1, endAltitudeFt: 2500, groundSpeedKts: 250 }
+        // descent
+      ],
+      provenanceNote: "Reconstructed representative trajectory for a JFK-LHR Boeing 787-9 eastbound service: great-circle route between the two airports, with a phase-of-flight altitude/speed profile (climb, two operational step-climbs, cruise, descent) built from publicly documented typical operating patterns for this route and aircraft type. This is NOT a specific recorded flight's ADS-B telemetry - live historical retrieval from OpenSky requires network/account access unavailable in this build environment. See demo-data/README.md."
+    });
+  }
+  function buildDemoFlightJfkLhrClearSkies() {
+    return buildFlight({
+      id: "demo-jfk-lhr-b789-clear",
+      callsign: "DEMO202",
+      origin: { iata: "JFK", lat: 40.6413, lon: -73.7781 },
+      destination: { iata: "LHR", lat: 51.47, lon: -0.4543 },
+      departureTime: "2026-01-16T13:30:00Z",
+      // different time of day / day -> patch has drifted past
+      aircraftIcaoType: "B789",
+      totalDurationSec: 400 * 60,
+      samplingIntervalSec: 60,
+      phases: [
+        { endFraction: 28 / 400, endAltitudeFt: 34e3, groundSpeedKts: 340 },
+        { endFraction: 150 / 400, endAltitudeFt: 34e3, groundSpeedKts: 500 },
+        { endFraction: 155 / 400, endAltitudeFt: 38e3, groundSpeedKts: 500 },
+        { endFraction: 370 / 400, endAltitudeFt: 38e3, groundSpeedKts: 510 },
+        { endFraction: 1, endAltitudeFt: 2500, groundSpeedKts: 250 }
+      ],
+      provenanceNote: "Reconstructed representative trajectory for a JFK-LHR Boeing 787-9 service departing at a different time than the primary demo flight, cruising higher (FL380 for most of the crossing). Same construction method and caveats as demo-jfk-lhr-b789 - see demo-data/README.md."
+    });
+  }
+  function buildDemoFlightBosDub() {
+    return buildFlight({
+      id: "demo-bos-dub-a20n",
+      callsign: "DEMO303",
+      origin: { iata: "BOS", lat: 42.3656, lon: -71.0096 },
+      destination: { iata: "DUB", lat: 53.4213, lon: -6.2701 },
+      departureTime: "2026-01-14T23:40:00Z",
+      aircraftIcaoType: "A20N",
+      totalDurationSec: 340 * 60,
+      samplingIntervalSec: 60,
+      phases: [
+        { endFraction: 24 / 340, endAltitudeFt: 34e3, groundSpeedKts: 320 },
+        { endFraction: 160 / 340, endAltitudeFt: 34e3, groundSpeedKts: 470 },
+        { endFraction: 165 / 340, endAltitudeFt: 36e3, groundSpeedKts: 470 },
+        { endFraction: 300 / 340, endAltitudeFt: 36e3, groundSpeedKts: 480 },
+        { endFraction: 1, endAltitudeFt: 2500, groundSpeedKts: 230 }
+      ],
+      provenanceNote: "Reconstructed representative trajectory for a Boston-Dublin A320neo service. Same construction method and caveats as demo-jfk-lhr-b789 - see demo-data/README.md."
+    });
+  }
+
+  // src/browser-entry.ts
+  var DEMO_FLIGHT_BUILDERS = {
+    "demo-jfk-lhr-b789": buildDemoFlightJfkLhr,
+    "demo-jfk-lhr-b789-clear": buildDemoFlightJfkLhrClearSkies,
+    "demo-bos-dub-a20n": buildDemoFlightBosDub
+  };
+  async function analyzeDemoFlight(flightKey) {
+    const flight = DEMO_FLIGHT_BUILDERS[flightKey]();
+    const provider = new DemoDatasetProvider(flight.departureTime);
+    return analyzeFlight(flight, provider);
+  }
+  globalThis.ContrailEngine = {
+    analyzeDemoFlight,
+    DEMO_FLIGHT_KEYS: Object.keys(DEMO_FLIGHT_BUILDERS)
+  };
+})();
+</script>
+<script id="logic-bundle">/* ==========================================================================
+   ISOBAR — pure logic module
+   Every function here is a pure function of its arguments: no DOM access,
+   no globals, no state. This is what makes ui/src/__tests__/logic.test.js
+   possible without a browser — see that file for the actual UI-layer tests.
+   Loaded as a plain <script> in the browser (attaches window.IsobarLogic)
+   and required as a CommonJS-ish module under Node for tests.
+   ========================================================================== */
+(function (root, factory) {
+  const mod = factory();
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = mod;
+  }
+  root.IsobarLogic = mod;
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // Formatters
+  // ---------------------------------------------------------------------
+  const fmt = {
+    tj: (j) => (j / 1e12).toFixed(3) + " TJ",
+    pct: (x) => (x >= 0 ? "+" : "") + (x * 100).toFixed(1) + "%",
+    pct0: (x) => (x * 100).toFixed(0) + "%",
+    kg: (x) => (Math.abs(x) >= 1000 ? (x / 1000).toFixed(2) + " t" : x.toFixed(1) + " kg"),
+    min: (sec) => {
+      const m = sec / 60;
+      return (m >= 0 ? "+" : "") + m.toFixed(1) + " min";
+    },
+    ft: (x) => (x >= 0 ? "+" : "") + x.toLocaleString() + " ft",
+    clock: (iso) => new Date(iso).toISOString().slice(11, 16) + "z",
+    date: (iso) => new Date(iso).toISOString().slice(0, 10),
+  };
+
+  // ---------------------------------------------------------------------
+  // Flight-card sensitivity classification (landing screen badges)
+  // ---------------------------------------------------------------------
+  function sensitivityFromAnalysis(a) {
+    if (!a.criticalWindows.length || a.baselineTotalImpactJ <= 0) return "low";
+    const share = a.criticalWindows[0].shareOfFlightImpact;
+    if (a.baselineTotalImpactJ / 1e12 > 400 || share > 0.4) return "high";
+    return a.baselineTotalImpactJ > 0 ? "moderate" : "low";
+  }
+
+  // ---------------------------------------------------------------------
+  // 2D equirectangular-ish local projection (radar scope)
+  // ---------------------------------------------------------------------
+  function buildProjection(traj) {
+    let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+    traj.forEach((p) => {
+      minLat = Math.min(minLat, p.latitude);
+      maxLat = Math.max(maxLat, p.latitude);
+      minLon = Math.min(minLon, p.longitude);
+      maxLon = Math.max(maxLon, p.longitude);
+    });
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLon = (minLon + maxLon) / 2;
+    const cosLat = Math.cos((centerLat * Math.PI) / 180);
+    return { minLat, maxLat, minLon, maxLon, centerLat, centerLon, cosLat, w: 800, h: 420 };
+  }
+
+  function project(proj, lat, lon) {
+    const pad = 64;
+    const spanX = Math.max((proj.maxLon - proj.minLon) * proj.cosLat, 0.01);
+    const spanY = Math.max(proj.maxLat - proj.minLat, 0.01);
+    const scale = Math.min((proj.w - pad * 2) / spanX, (proj.h - pad * 2) / spanY);
+    const x = proj.w / 2 + (lon - proj.centerLon) * proj.cosLat * scale;
+    const y = proj.h / 2 - (lat - proj.centerLat) * scale;
+    return { x, y };
+  }
+
+  // lat/lon/alt -> unit-sphere-ish xyz for the 3D globe (radius in scene units)
+  function latLonAltToXYZ(lat, lon, altFt, radius, altScale) {
+    const r = radius + (altFt || 0) * (altScale || 0);
+    const phi = (90 - lat) * (Math.PI / 180);
+    const theta = (lon + 180) * (Math.PI / 180);
+    return {
+      x: -r * Math.sin(phi) * Math.cos(theta),
+      z: r * Math.sin(phi) * Math.sin(theta),
+      y: r * Math.cos(phi),
+    };
+  }
+
+  // ---------------------------------------------------------------------
+  // Risk color mapping (route coloring + satellite layer)
+  // ---------------------------------------------------------------------
+  function riskColor(sample, alpha) {
+    alpha = alpha === undefined ? 1 : alpha;
+    if (!sample || sample.segmentEnergyForcingJ === null) return `rgba(110,130,150,${0.5 * alpha})`;
+    if (sample.segmentEnergyForcingJ <= 0) return `rgba(111,184,255,${0.65 * alpha})`;
+    const mag = Math.log10(Math.max(sample.segmentEnergyForcingJ, 1e9));
+    const t = Math.max(0, Math.min(1, (mag - 10) / 5));
+    const r = 242 + t * 13, g = 161 - t * 100, b = 84 - t * 60;
+    return `rgba(${r | 0},${g | 0},${b | 0},${alpha})`;
+  }
+
+  // ---------------------------------------------------------------------
+  // What-If builder matching
+  // ---------------------------------------------------------------------
+  function findMatchingCounterfactual(counterfactuals, mode, offsetFt, specialId) {
+    if (specialId) return counterfactuals.find((c) => c.id === specialId) || null;
+    if (offsetFt === null || offsetFt === undefined || offsetFt === 0) return null;
+    const wantKind = mode === "full" ? "full-flight-offset" : offsetFt < 0 ? "critical-window-descent" : "critical-window-climb";
+    return counterfactuals.find((c) => c.strategy.kind === wantKind && c.strategy.altitudeOffsetFt === offsetFt) || null;
+  }
+
+  function isOffsetAvailable(counterfactuals, mode, offsetFt) {
+    const wantKind = mode === "full" ? "full-flight-offset" : offsetFt < 0 ? "critical-window-descent" : "critical-window-climb";
+    return counterfactuals.some((c) => c.strategy.kind === wantKind && c.strategy.altitudeOffsetFt === offsetFt);
+  }
+
+  // ---------------------------------------------------------------------
+  // Result assessment (leverage / aggressive / worse / neutral)
+  // ---------------------------------------------------------------------
+  function computeAssessment(cf, tradeoffPoints) {
+    const knee = (tradeoffPoints || []).find((p) => p.isKneePoint);
+    if (cf.impactReduction < 0) {
+      return { cls: "worse", label: "Made it worse", note: "This intervention increased modeled contrail impact relative to the actual flight — a real, non-monotonic result the model does not smooth away." };
+    }
+    if (knee && knee.counterfactualId === cf.id) {
+      return { cls: "leverage", label: "High-leverage option", note: "This captures a large share of the available contrail reduction without the operational cost of more aggressive alternatives." };
+    }
+    if (knee && cf.estimatedFuelDeltaKg > knee.operationalCost * 8) {
+      return { cls: "aggressive", label: "Aggressive intervention", note: "A much larger operational cost than the high-leverage option, for further (sometimes total) impact reduction." };
+    }
+    return { cls: "neutral", label: "Alternative option", note: "One point among several generated alternatives — see the full tradeoff for context." };
+  }
+
+  // ---------------------------------------------------------------------
+  // Pareto log-scale axis math
+  // ---------------------------------------------------------------------
+  function paretoScales(points, dims) {
+    const { W, H, padL, padR, padT, padB } = dims;
+    const costs = points.map((p) => Math.max(p.operationalCost, 0.1));
+    const minCost = Math.min(...costs) * 0.6;
+    const maxCost = Math.max(...costs) * 1.6;
+    const logMin = Math.log10(minCost);
+    const logMax = Math.log10(maxCost);
+    const benefits = points.map((p) => p.contrailBenefit);
+    const minB = Math.min(0, ...benefits) - 0.08;
+    const maxB = Math.max(1, ...benefits) + 0.08;
+
+    const x = (cost) => padL + ((Math.log10(Math.max(cost, 0.1)) - logMin) / (logMax - logMin)) * (W - padL - padR);
+    const y = (b) => padT + (1 - (b - minB) / (maxB - minB)) * (H - padT - padB);
+    return { x, y, minCost, maxCost, minB, maxB };
+  }
+
+  return {
+    fmt,
+    sensitivityFromAnalysis,
+    buildProjection,
+    project,
+    latLonAltToXYZ,
+    riskColor,
+    findMatchingCounterfactual,
+    isOffsetAvailable,
+    computeAssessment,
+    paretoScales,
+  };
+});
+</script>
+<script id="satellite-bundle">/* ==========================================================================
+   ISOBAR — synthetic satellite observation layer (spec section 32/33)
+   ==========================================================================
+   HONESTY NOTE (read before touching this file): this build environment has
+   no network access to any real satellite-derived contrail product (Google's
+   geostationary-satellite detections included). There is no live data here.
+   This module generates a clearly-labeled, deterministic, illustrative
+   "observation" signal — same spirit as src/science/atmosphericField.ts's
+   synthetic-but-documented approach — so the UI can demonstrate the
+   MODEL vs. OBSERVATION distinction the spec asks for, without ever
+   claiming it's real imagery or attributing a detection to the aircraft.
+   Every surface that shows this layer is labeled "synthetic".
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  // Same FNV-1a-style avalanche as src/utils/geo.ts:hashNoise, reimplemented
+  // here (not shared with the engine bundle) because this is presentation-
+  // layer illustration, not a science-engine calculation.
+  function hashNoise() {
+    let h = 2166136261;
+    for (let i = 0; i < arguments.length; i++) {
+      const bits = Math.floor(arguments[i] * 1000);
+      h ^= bits;
+      h = Math.imul(h, 16777619);
+    }
+    h ^= h >>> 15;
+    return ((h >>> 0) % 100000) / 100000;
+  }
+
+  /**
+   * For each baseline trajectory index, decide whether a synthetic
+   * "satellite" would have reported a detection there. Deliberately NOT a
+   * 1:1 copy of the model's persistentContrailProbability — real satellite
+   * detection and a physical model agree often but not always, and showing
+   * perfect agreement here would misrepresent that relationship.
+   */
+  function computeDetections(analysis) {
+    const annotated = analysis.baselineAnnotated;
+    return annotated.map((a, i) => {
+      const s = a.sample;
+      if (!s || s.persistentContrailProbability === null) return { index: i, observed: false };
+      const detectionChance = 0.15 + 0.6 * s.persistentContrailProbability;
+      const roll = hashNoise(a.point.latitude * 100, a.point.longitude * 100, i, 7.13);
+      return { index: i, observed: roll < detectionChance, modelProbability: s.persistentContrailProbability };
+    });
+  }
+
+  window.SatelliteLayer = { computeDetections };
+})();
+</script>
+<script id="globe-bundle">/* ==========================================================================
+   ISOBAR — 3D globe view (spec section 26)
+   Built as an enhancement layered on top of the complete, fully-functional
+   2D radar scope (never the other way around) — spec section 29 requires
+   the app to stay fully usable without WebGL, so this module self-reports
+   availability and app.js falls back to 2D whenever it isn't. No real
+   coastline/terrain data is used, by design (see the design-system note in
+   the original handoff): a grid-line globe keeps the same
+   "instrument display, not a map" language as the 2D scope.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const RADIUS = 60;
+  const ALT_SCALE = 0.00045; // feet -> scene units above the surface
+
+  let ready = false;
+  let renderer, scene, camera, canvas;
+  let routeGroup, aircraftMesh, cfGroup, satGroup;
+  let currentAnalysis = null;
+  let rafId = null;
+  let active = false;
+
+  // orbit state
+  const cam = { azimuth: 0.9, polar: 1.15, distance: 165, target: null };
+  let dragging = false, lastX = 0, lastY = 0, idleFrames = 0;
+
+  function available() {
+    if (!window.THREE) return false;
+    try {
+      const test = document.createElement("canvas");
+      return !!(test.getContext("webgl") || test.getContext("experimental-webgl"));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function ensureInit() {
+    if (ready) return true;
+    if (!available()) return false;
+    canvas = document.getElementById("globeCanvas");
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
+
+    buildEarth();
+    wireControls();
+    ready = true;
+    return true;
+  }
+
+  function buildEarth() {
+    const grid = new THREE.Mesh(
+      new THREE.SphereGeometry(RADIUS, 28, 20),
+      new THREE.MeshBasicMaterial({ color: 0x2c3946, wireframe: true, transparent: true, opacity: 0.4 })
+    );
+    scene.add(grid);
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(RADIUS - 0.6, 28, 20),
+      new THREE.MeshBasicMaterial({ color: 0x060a0f })
+    );
+    scene.add(core);
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(RADIUS * 1.04, 28, 20),
+      new THREE.MeshBasicMaterial({ color: 0x4fd6c8, transparent: true, opacity: 0.05, side: THREE.BackSide })
+    );
+    scene.add(glow);
+  }
+
+  function parseRgba(str) {
+    const m = /rgba?\(([^)]+)\)/.exec(str);
+    if (!m) return new THREE.Color(0x888888);
+    const parts = m[1].split(",").map((s) => parseFloat(s));
+    return new THREE.Color(parts[0] / 255, parts[1] / 255, parts[2] / 255);
+  }
+
+  function pt3(lat, lon, altFt) {
+    const p = window.IsobarLogic.latLonAltToXYZ(lat, lon, altFt, RADIUS, ALT_SCALE);
+    return new THREE.Vector3(p.x, p.y, p.z);
+  }
+
+  function chunk3(flat) {
+    const out = [];
+    for (let i = 0; i < flat.length; i += 3) out.push([flat[i], flat[i + 1], flat[i + 2]]);
+    return out;
+  }
+
+  function buildRoute(analysis) {
+    if (routeGroup) {
+      scene.remove(routeGroup);
+      disposeGroup(routeGroup);
+    }
+    routeGroup = new THREE.Group();
+    const traj = analysis.flight.trajectory;
+    const annotated = analysis.baselineAnnotated;
+
+    const positions = [];
+    const colors = [];
+    for (let i = 0; i < traj.length - 1; i++) {
+      const a = pt3(traj[i].latitude, traj[i].longitude, traj[i].altitudeFt);
+      const b = pt3(traj[i + 1].latitude, traj[i + 1].longitude, traj[i + 1].altitudeFt);
+      const sample = annotated[i] ? annotated[i].sample : null;
+      const c = parseRgba(window.IsobarLogic.riskColor(sample, 1));
+      positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      colors.push(c.r, c.g, c.b, c.r, c.g, c.b);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 2 });
+    routeGroup.add(new THREE.LineSegments(geo, mat));
+
+    // critical window: raised, glowing amber ribbon
+    analysis.criticalWindows.forEach((cw) => {
+      const cwPos = [];
+      for (let i = cw.startIndex; i <= cw.endIndex && i < traj.length; i++) {
+        const p = pt3(traj[i].latitude, traj[i].longitude, traj[i].altitudeFt + 900);
+        cwPos.push(p.x, p.y, p.z);
+      }
+      const pts = chunk3(cwPos).map((v) => new THREE.Vector3(v[0], v[1], v[2]));
+      const cwGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      const cwMat = new THREE.LineBasicMaterial({ color: 0xf2a154, linewidth: 3, transparent: true, opacity: 0.95 });
+      routeGroup.add(new THREE.Line(cwGeo, cwMat));
+    });
+
+    // origin/destination markers
+    [traj[0], traj[traj.length - 1]].forEach((p) => {
+      const pos = pt3(p.latitude, p.longitude, 0);
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), new THREE.MeshBasicMaterial({ color: 0xc8d7e1 }));
+      dot.position.copy(pos);
+      routeGroup.add(dot);
+    });
+
+    scene.add(routeGroup);
+
+    if (aircraftMesh) scene.remove(aircraftMesh);
+    aircraftMesh = new THREE.Mesh(
+      new THREE.ConeGeometry(0.9, 2.6, 6),
+      new THREE.MeshBasicMaterial({ color: 0x6fb8ff })
+    );
+    scene.add(aircraftMesh);
+
+    satGroup = new THREE.Group();
+    scene.add(satGroup);
+
+    const mid = traj[Math.floor(traj.length / 2)];
+    cam.target = pt3(mid.latitude, mid.longitude, 8000);
+  }
+
+  function disposeGroup(group) {
+    group.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    });
+  }
+
+  function orientMarker(mesh, traj, idx) {
+    const cur = traj[idx];
+    const next = traj[Math.min(idx + 1, traj.length - 1)];
+    const pos = pt3(cur.latitude, cur.longitude, cur.altitudeFt);
+    const aheadPos = pt3(next.latitude, next.longitude, next.altitudeFt);
+    mesh.position.copy(pos);
+    mesh.up.copy(pos.clone().normalize());
+    mesh.lookAt(aheadPos);
+    mesh.rotateX(Math.PI / 2);
+  }
+
+  function activate(analysis, idx, selectedCf, satVisible) {
+    if (!ensureInit()) return;
+    active = true;
+    idleFrames = 0;
+    if (currentAnalysis !== analysis) {
+      buildRoute(analysis);
+      currentAnalysis = analysis;
+      cam.azimuth = 0.9;
+      cam.polar = 1.15;
+      cam.distance = RADIUS * 2.7;
+    }
+    resize();
+    update(idx, selectedCf, satVisible);
+    if (!rafId) loop();
+  }
+
+  function deactivate() {
+    active = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function update(idx, selectedCf, satVisible) {
+    if (!ready || !currentAnalysis) return;
+    const traj = currentAnalysis.flight.trajectory;
+    const clampedIdx = Math.min(idx, traj.length - 1);
+    orientMarker(aircraftMesh, traj, clampedIdx);
+
+    if (cfGroup) {
+      scene.remove(cfGroup);
+      disposeGroup(cfGroup);
+      cfGroup = null;
+    }
+    if (selectedCf) {
+      cfGroup = new THREE.Group();
+      const cfTraj = selectedCf.modifiedTrajectory;
+      const pts = cfTraj.map((p) => pt3(p.latitude, p.longitude, p.altitudeFt));
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineDashedMaterial({ color: 0xf2a154, dashSize: 1.4, gapSize: 0.8 });
+      const line = new THREE.Line(geo, mat);
+      line.computeLineDistances();
+      cfGroup.add(line);
+      const cfIdx = Math.min(clampedIdx, cfTraj.length - 1);
+      const marker = new THREE.Mesh(new THREE.ConeGeometry(0.9, 2.6, 6), new THREE.MeshBasicMaterial({ color: 0xf2a154 }));
+      orientMarker(marker, cfTraj, cfIdx);
+      cfGroup.add(marker);
+      scene.add(cfGroup);
+    }
+
+    if (satGroup) {
+      while (satGroup.children.length) satGroup.remove(satGroup.children[0]);
+      if (satVisible && window.SatelliteLayer) {
+        const detections = window.SatelliteLayer.computeDetections(currentAnalysis);
+        const dotGeo = new THREE.SphereGeometry(0.5, 6, 6);
+        const dotMat = new THREE.MeshBasicMaterial({ color: 0xc98bf2 });
+        detections.forEach((d) => {
+          if (!d.observed) return;
+          const p = traj[d.index];
+          const dot = new THREE.Mesh(dotGeo, dotMat);
+          dot.position.copy(pt3(p.latitude, p.longitude, p.altitudeFt + 1600));
+          satGroup.add(dot);
+        });
+      }
+    }
+  }
+
+  function resize() {
+    if (!ready || !canvas) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    renderer.setSize(rect.width, 420, false);
+    camera.aspect = rect.width / 420;
+    camera.updateProjectionMatrix();
+  }
+
+  function wireControls() {
+    canvas.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      idleFrames = 0;
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      cam.azimuth -= dx * 0.006;
+      cam.polar = Math.max(0.25, Math.min(Math.PI - 0.25, cam.polar - dy * 0.006));
+      idleFrames = 0;
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+      canvas.addEventListener(ev, () => (dragging = false))
+    );
+    canvas.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        cam.distance = Math.max(RADIUS * 1.3, Math.min(RADIUS * 6, cam.distance + e.deltaY * 0.08));
+        idleFrames = 0;
+      },
+      { passive: false }
+    );
+  }
+
+  function loop() {
+    if (!active) {
+      rafId = null;
+      return;
+    }
+    idleFrames++;
+    if (idleFrames > 90) cam.azimuth += 0.0012; // gentle auto-rotate when idle
+
+    const target = cam.target || new THREE.Vector3(0, 0, 0);
+    const x = target.x + cam.distance * Math.sin(cam.polar) * Math.cos(cam.azimuth);
+    const z = target.z + cam.distance * Math.sin(cam.polar) * Math.sin(cam.azimuth);
+    const y = target.y + cam.distance * Math.cos(cam.polar);
+    camera.position.set(x, y, z);
+    camera.lookAt(target);
+
+    renderer.render(scene, camera);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  window.GlobeView = { available, activate, deactivate, update, resize };
+})();
+</script>
+<script id="whatif-bundle">/* ==========================================================================
+   CONTRAIL TRADEOFF — Phase 2: WHAT IF? / SIMULATE / TRADEOFF
+   Reads precomputed Counterfactual[] from the live analyzeFlight() result
+   (window.ContrailApp.state.current) — no new science logic here, this only
+   picks among already-generated, already-validated alternatives and
+   visualizes the comparison. See src/science/pipeline.ts:standardStrategySet
+   for the full generated set (spec sections 13-14, 21).
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  let app; // window.ContrailApp, bound on reset()
+  let sel = { mode: "window", offsetFt: null, specialId: null }; // builder selection
+
+  function reset(state, _els) {
+    app = window.ContrailApp;
+    sel = { mode: state.current.criticalWindows.length ? "window" : "full", offsetFt: null, specialId: null };
+    state.selectedCf = null;
+    document.getElementById("legendCf").classList.add("hidden");
+    document.getElementById("resultPanelHost").classList.add("hidden");
+    renderBuilder(state);
+  }
+
+  function counterfactualsFor(state) {
+    return state.current.counterfactuals || [];
+  }
+
+  function findMatch(state) {
+    const cfs = counterfactualsFor(state);
+    return window.IsobarLogic.findMatchingCounterfactual(cfs, sel.mode, sel.offsetFt, sel.specialId);
+  }
+
+  function offsetAvailable(state, mode, offsetFt) {
+    return window.IsobarLogic.isOffsetAvailable(counterfactualsFor(state), mode, offsetFt);
+  }
+
+  function specialStrategies(state) {
+    const cfs = counterfactualsFor(state);
+    return cfs.filter((c) => c.strategy.kind === "return-to-cruise" || c.strategy.kind === "multi-step-profile");
+  }
+
+  const OFFSETS = [-4000, -2000, -1000, 1000, 2000, 4000];
+
+  function renderBuilder(state) {
+    const host = document.getElementById("whatIfPanelHost");
+    const hasWindow = state.current.criticalWindows.length > 0;
+    const specials = specialStrategies(state);
+
+    host.innerHTML = `
+      <div class="panel-title">What if?</div>
+      <div class="whatif-section">
+        <div class="seg-control" id="segMode">
+          <button class="seg-btn ${sel.mode === "window" ? "active" : ""}" data-mode="window" ${hasWindow ? "" : "disabled"}>Critical window only</button>
+          <button class="seg-btn ${sel.mode === "full" ? "active" : ""}" data-mode="full">Entire flight</button>
+        </div>
+        <div class="alt-select-label">Altitude change</div>
+        <div class="alt-offsets" id="altOffsets">
+          ${OFFSETS.slice(0, 3)
+            .map((o) => offsetBtn(state, o))
+            .join("")}
+          <button class="alt-offset-btn zero" disabled>ACTUAL</button>
+          ${OFFSETS.slice(3)
+            .map((o) => offsetBtn(state, o))
+            .join("")}
+        </div>
+        ${
+          specials.length
+            ? `<div class="alt-select-label">Other strategies</div>
+               <div class="alt-offsets" style="grid-template-columns:repeat(${specials.length},1fr);margin-bottom:16px;" id="specialOffsets">
+                 ${specials.map((c) => specialBtn(c)).join("")}
+               </div>`
+            : ""
+        }
+        <button class="btn btn-primary simulate-btn" id="simulateBtn" disabled>Simulate</button>
+        <div class="sim-loading hidden" id="simLoading"></div>
+      </div>
+    `;
+
+    document.getElementById("segMode").addEventListener("click", (e) => {
+      const btn = e.target.closest(".seg-btn");
+      if (!btn || btn.disabled) return;
+      sel.mode = btn.dataset.mode;
+      sel.specialId = null;
+      renderBuilder(state);
+    });
+    document.getElementById("altOffsets").addEventListener("click", (e) => {
+      const btn = e.target.closest(".alt-offset-btn");
+      if (!btn || btn.disabled || !btn.dataset.offset) return;
+      sel.offsetFt = parseInt(btn.dataset.offset, 10);
+      sel.specialId = null;
+      renderBuilder(state);
+    });
+    const specialsEl = document.getElementById("specialOffsets");
+    if (specialsEl) {
+      specialsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest(".alt-offset-btn");
+        if (!btn) return;
+        sel.specialId = btn.dataset.id;
+        sel.offsetFt = null;
+        renderBuilder(state);
+      });
+    }
+
+    const match = findMatch(state);
+    const simBtn = document.getElementById("simulateBtn");
+    simBtn.disabled = !match;
+    simBtn.textContent = match ? "Simulate" : "Select an altitude change";
+    simBtn.addEventListener("click", () => runSimulation(state, match));
+  }
+
+  function offsetBtn(state, offsetFt) {
+    const available = offsetAvailable(state, sel.mode, offsetFt);
+    const active = sel.offsetFt === offsetFt && !sel.specialId;
+    return `<button class="alt-offset-btn ${active ? "active" : ""}" data-offset="${offsetFt}" ${available ? "" : "disabled"} title="${available ? "" : "Infeasible or not generated for this flight"}">${offsetFt > 0 ? "+" : ""}${offsetFt}</button>`;
+  }
+
+  function specialBtn(cf) {
+    const label = cf.strategy.kind === "return-to-cruise" ? "Return-to-cruise " + cf.strategy.altitudeOffsetFt : "Multi-step " + cf.strategy.altitudeOffsetFt;
+    const active = sel.specialId === cf.id;
+    return `<button class="alt-offset-btn ${active ? "active" : ""}" data-id="${cf.id}" style="font-size:10px;">${label}</button>`;
+  }
+
+  const LOADING_MESSAGES = [
+    "Generating trajectory…",
+    "Sampling atmosphere…",
+    "Evaluating contrail impact…",
+    "Estimating operational consequence…",
+  ];
+
+  function runSimulation(state, cf) {
+    if (!cf) return;
+    const simBtn = document.getElementById("simulateBtn");
+    const loading = document.getElementById("simLoading");
+    simBtn.disabled = true;
+    loading.classList.remove("hidden");
+    let i = 0;
+    loading.textContent = LOADING_MESSAGES[0];
+    const timer = setInterval(() => {
+      i++;
+      if (i >= LOADING_MESSAGES.length) {
+        clearInterval(timer);
+        loading.classList.add("hidden");
+        simBtn.disabled = false;
+        applyResult(state, cf);
+        return;
+      }
+      loading.textContent = LOADING_MESSAGES[i];
+    }, 260);
+  }
+
+  function applyResult(state, cf) {
+    state.selectedCf = cf;
+    document.getElementById("legendCf").classList.remove("hidden");
+    app.drawScope();
+    renderResultPanel(state, cf);
+    document.getElementById("resultPanelHost").classList.remove("hidden");
+    document.getElementById("resultPanelHost").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function assessment(state, cf) {
+    return window.IsobarLogic.computeAssessment(cf, state.current.tradeoffPoints);
+  }
+
+  const app_fmt = () => window.ContrailApp.fmt;
+
+  function renderResultPanel(state, cf) {
+    const fmt = app_fmt();
+    const host = document.getElementById("resultPanelHost");
+    const a = assessment(state, cf);
+    const durMin = Math.round((cf.strategy.kind.startsWith("critical") ? state.current.criticalWindows[cf.strategy.windowIndex || 0].durationSec : (new Date(state.current.flight.arrivalTime) - new Date(state.current.flight.departureTime)) / 1000) / 60);
+
+    host.innerHTML = `
+      <div class="panel-title">Counterfactual result <button class="btn btn-ghost btn-sm" id="clearCfBtn">Clear</button></div>
+      <div class="result-hero">
+        <div class="rh-label">Contrail impact</div>
+        <div class="rh-value ${cf.impactReduction >= 0 ? "good" : "bad"}">${fmt.pct(cf.impactReduction)}</div>
+        <div class="assessment-badge ${a.cls}">${a.label}</div>
+        <div class="rh-assessment">${a.note}</div>
+      </div>
+      <div class="result-grid">
+        <div class="result-metric"><div class="rm-label">Estimated fuel</div><div class="rm-value ${cf.estimatedFuelDeltaKg > 0 ? "bad" : "good"}">${cf.estimatedFuelDeltaKg > 0 ? "+" : ""}${fmt.kg(cf.estimatedFuelDeltaKg)}</div></div>
+        <div class="result-metric"><div class="rm-label">Estimated CO&sub2;</div><div class="rm-value ${cf.estimatedCO2DeltaKg > 0 ? "bad" : "good"}">${cf.estimatedCO2DeltaKg > 0 ? "+" : ""}${fmt.kg(cf.estimatedCO2DeltaKg)}</div></div>
+        <div class="result-metric"><div class="rm-label">Estimated time</div><div class="rm-value ${cf.estimatedTimeDeltaSec > 0 ? "bad" : "good"}">${fmt.min(cf.estimatedTimeDeltaSec)}</div></div>
+        <div class="result-metric"><div class="rm-label">Altitude change</div><div class="rm-value">${fmt.ft(cf.strategy.altitudeOffsetFt)}</div></div>
+      </div>
+      <div class="alt-chart-wrap" style="margin-top:16px;">
+        <div class="panel-title" style="margin-bottom:6px;">Actual vs. counterfactual — critical window detail</div>
+        <svg id="zoomAltChart"></svg>
+      </div>
+      <button class="explain-link" id="explainResultBtn">How was this calculated? →</button>
+    `;
+    renderZoomChart(state, cf);
+    document.getElementById("clearCfBtn").addEventListener("click", () => {
+      state.selectedCf = null;
+      document.getElementById("legendCf").classList.add("hidden");
+      app.drawScope();
+      host.classList.add("hidden");
+    });
+    document.getElementById("explainResultBtn").addEventListener("click", () => openResultExplainModal(state, cf, a));
+  }
+
+  // Zoomed altitude comparison around the affected window, so a 1-4k ft
+  // change reads clearly instead of disappearing against a 0-38,000ft scale
+  // (this is the fix called for in the handoff notes, item 1).
+  function renderZoomChart(state, cf) {
+    const svg = document.getElementById("zoomAltChart");
+    const actualTraj = state.current.flight.trajectory;
+    const cfTraj = cf.modifiedTrajectory;
+    let lo, hi;
+    if (cf.strategy.windowIndex !== undefined && state.current.criticalWindows[cf.strategy.windowIndex]) {
+      const w = state.current.criticalWindows[cf.strategy.windowIndex];
+      const margin = Math.max(10, Math.round((w.endIndex - w.startIndex) * 1.5));
+      lo = Math.max(0, w.startIndex - margin);
+      hi = Math.min(actualTraj.length - 1, w.endIndex + margin);
+    } else {
+      lo = 0;
+      hi = actualTraj.length - 1;
+    }
+    const W = 1000, H = 150, padL = 36, padR = 8, padT = 12, padB = 20;
+    let minAlt = Infinity, maxAlt = -Infinity;
+    for (let i = lo; i <= hi; i++) {
+      minAlt = Math.min(minAlt, actualTraj[i].altitudeFt, cfTraj[i] ? cfTraj[i].altitudeFt : actualTraj[i].altitudeFt);
+      maxAlt = Math.max(maxAlt, actualTraj[i].altitudeFt, cfTraj[i] ? cfTraj[i].altitudeFt : actualTraj[i].altitudeFt);
+    }
+    const span = Math.max(maxAlt - minAlt, 200);
+    minAlt -= span * 0.15;
+    maxAlt += span * 0.15;
+    const x = (i) => padL + ((i - lo) / Math.max(hi - lo, 1)) * (W - padL - padR);
+    const y = (alt) => padT + (1 - (alt - minAlt) / (maxAlt - minAlt)) * (H - padT - padB);
+
+    const pathOf = (traj) => {
+      let d = "";
+      for (let i = lo; i <= hi; i++) {
+        const pt = traj[i];
+        if (!pt) continue;
+        d += `${i === lo ? "M" : "L"}${x(i).toFixed(1)},${y(pt.altitudeFt).toFixed(1)} `;
+      }
+      return d;
+    };
+
+    let windowRect = "";
+    if (cf.strategy.windowIndex !== undefined && state.current.criticalWindows[cf.strategy.windowIndex]) {
+      const w = state.current.criticalWindows[cf.strategy.windowIndex];
+      windowRect = `<rect x="${x(w.startIndex)}" y="${padT}" width="${Math.max(x(w.endIndex) - x(w.startIndex), 2)}" height="${H - padT - padB}" fill="var(--warn)" opacity="0.13"/>`;
+    }
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `
+      <text x="${padL}" y="${padT - 2}" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">${Math.round(maxAlt).toLocaleString()} ft</text>
+      <text x="${padL}" y="${H - padB + 12}" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">${Math.round(minAlt).toLocaleString()} ft</text>
+      ${windowRect}
+      <path d="${pathOf(actualTraj)}" fill="none" stroke="var(--actual)" stroke-width="2.2"/>
+      <path d="${pathOf(cfTraj)}" fill="none" stroke="var(--counterfactual)" stroke-width="2.2" stroke-dasharray="5,3"/>
+    `;
+  }
+
+  function openResultExplainModal(state, cf, a) {
+    const fmt = app_fmt();
+    const body = document.getElementById("modalBody");
+    document.getElementById("modalTitle").textContent = "How this was calculated";
+    const windowInfo = cf.strategy.windowIndex !== undefined ? state.current.criticalWindows[cf.strategy.windowIndex] : null;
+    body.innerHTML = `
+      <div class="explain-flow">
+        <div class="explain-step"><span class="es-k">Baseline</span><span class="es-v">Actual reconstructed trajectory, ${fmt.tj(cf.baselineImpactJ)} modeled energy forcing.</span></div>
+        <div class="explain-step"><span class="es-k">Intervention</span><span class="es-v">${cf.strategy.kind.replace(/-/g, " ")}, ${fmt.ft(cf.strategy.altitudeOffsetFt)}${windowInfo ? ` during ${fmt.clock(windowInfo.startTimestamp)}–${fmt.clock(windowInfo.endTimestamp)} (${Math.round(windowInfo.durationSec / 60)} min)` : " across the entire flight"}.</span></div>
+        <div class="explain-step"><span class="es-k">Transition</span><span class="es-v">Kinematically-continuous altitude ramp — no instantaneous jumps between flight levels.</span></div>
+        <div class="explain-step"><span class="es-k">Re-sampling</span><span class="es-v">The modified trajectory is re-sampled against the same atmospheric field, then re-aggregated the same way as the baseline.</span></div>
+        <div class="explain-step"><span class="es-k">Impact metric</span><span class="es-v">Sum of positive segment energy forcing (CoCiP-style), Joules — impact reduction is a fraction of the baseline total.</span></div>
+        <div class="explain-step"><span class="es-k">Operational model</span><span class="es-v">Simplified parabolic fuel model around the flight's recorded cruise altitude + constant-Mach/ISA time delta. Fuel Δ ${fmt.kg(cf.estimatedFuelDeltaKg)}, CO&sub2; Δ ${fmt.kg(cf.estimatedCO2DeltaKg)}, time Δ ${fmt.min(cf.estimatedTimeDeltaSec)}.</span></div>
+        <div class="explain-step"><span class="es-k">Feasibility</span><span class="es-v">Within service ceiling: ${cf.feasibilityFlags.withinServiceCeiling ? "yes" : "no"}. Within kinematic limits: ${cf.feasibilityFlags.withinKinematicLimits ? "yes" : "no"}.${cf.feasibilityFlags.notes.length ? " " + cf.feasibilityFlags.notes.join(" ") : ""}</span></div>
+        <div class="explain-step"><span class="es-k">Uncertainty</span><span class="es-v"><span class="conf-badge ${cf.uncertainty.level}">${cf.uncertainty.level}</span></span></div>
+      </div>
+      <div class="limitations-title">Important limitations</div>
+      <ul class="limitations-list">${cf.uncertainty.reasons.map((r) => `<li>${r}</li>`).join("")}</ul>
+    `;
+    document.getElementById("modalBackdrop").classList.add("open");
+  }
+
+  // Called from the Pareto view when a point is clicked directly: sync the
+  // builder's selection state to match, then reveal the result panel
+  // immediately (no fabricated loading delay — the point was already
+  // computed to be plotted, so pretending otherwise would be dishonest).
+  function selectDirect(state, cf) {
+    app = window.ContrailApp;
+    if (cf.strategy.kind === "return-to-cruise" || cf.strategy.kind === "multi-step-profile") {
+      sel.specialId = cf.id;
+      sel.offsetFt = null;
+    } else {
+      sel.mode = cf.strategy.kind === "full-flight-offset" ? "full" : "window";
+      sel.offsetFt = cf.strategy.altitudeOffsetFt;
+      sel.specialId = null;
+    }
+    renderBuilder(state);
+    applyResult(state, cf);
+  }
+
+  window.WhatIf = { reset, selectDirect };
+})();
+</script>
+<script id="pareto-bundle">/* ==========================================================================
+   CONTRAIL TRADEOFF — Phase 3: PARETO / TRADEOFF view
+   Plots the precomputed TradeoffPoint[] (src/science/pareto.ts) on a
+   log-scale cost axis, since full-flight-offset strategies span roughly
+   three orders of magnitude in fuel cost versus localized interventions
+   (~4.8kg to ~3,192kg in the primary demo flight) — a linear axis
+   compresses everything near x=0. Non-monotonic points (negative benefit)
+   are plotted as-is, never hidden.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  let wired = false;
+
+  function reset(state) {
+    const host = document.getElementById("paretoTeaserHost");
+    const pts = state.current.tradeoffPoints || [];
+    if (!pts.length) {
+      host.classList.add("hidden");
+      return;
+    }
+    host.classList.remove("hidden");
+    const nonDom = pts.filter((p) => p.isNonDominated).length;
+    host.innerHTML = `
+      <div class="panel-title">The tradeoff</div>
+      <div class="empty-note" style="margin-bottom:10px;">${pts.length} generated alternatives &middot; ${nonDom} on the Pareto frontier.</div>
+      <button class="btn btn-ghost pareto-teaser-cta" id="openParetoBtn">View full tradeoff →</button>
+    `;
+    document.getElementById("openParetoBtn").addEventListener("click", () => openPareto(state));
+
+    if (!wired) {
+      document.getElementById("paretoClose").addEventListener("click", closePareto);
+      document.getElementById("paretoBackdrop").addEventListener("click", (e) => {
+        if (e.target.id === "paretoBackdrop") closePareto();
+      });
+      wired = true;
+    }
+  }
+
+  function closePareto() {
+    document.getElementById("paretoBackdrop").classList.remove("open");
+  }
+
+  function openPareto(state) {
+    renderChart(state);
+    document.getElementById("paretoBackdrop").classList.add("open");
+  }
+
+  function renderChart(state) {
+    const svg = document.getElementById("paretoSvg");
+    const tooltip = document.getElementById("paretoTooltip");
+    const pts = state.current.tradeoffPoints;
+    const cfsById = {};
+    state.current.counterfactuals.forEach((c) => (cfsById[c.id] = c));
+
+    const W = 900, H = 440, padL = 56, padR = 24, padT = 20, padB = 46;
+    const { x, y, minCost, maxCost, minB, maxB } = window.IsobarLogic.paretoScales(pts, { W, H, padL, padR, padT, padB });
+
+    let xTicks = "";
+    [1, 10, 100, 1000, 10000].forEach((v) => {
+      if (v < minCost || v > maxCost) return;
+      const px = x(v);
+      xTicks += `<line x1="${px}" y1="${padT}" x2="${px}" y2="${H - padB}" stroke="var(--panel-border)" stroke-width="1"/>
+        <text x="${px}" y="${H - padB + 16}" font-family="var(--mono)" font-size="10" fill="var(--text-2)" text-anchor="middle">${v >= 1000 ? v / 1000 + "t" : v + "kg"}</text>`;
+    });
+
+    const zeroY = y(0);
+    let yTicks = `<line x1="${padL}" y1="${zeroY}" x2="${W - padR}" y2="${zeroY}" stroke="var(--line-mid)" stroke-width="1"/>
+      <text x="${padL - 8}" y="${zeroY + 3}" font-family="var(--mono)" font-size="10" fill="var(--text-2)" text-anchor="end">0%</text>`;
+    [0.25, 0.5, 0.75, 1].forEach((v) => {
+      if (v > maxB) return;
+      const py = y(v);
+      yTicks += `<line x1="${padL}" y1="${py}" x2="${W - padR}" y2="${py}" stroke="var(--panel-border)" stroke-width="1"/>
+        <text x="${padL - 8}" y="${py + 3}" font-family="var(--mono)" font-size="10" fill="var(--text-2)" text-anchor="end">${Math.round(v * 100)}%</text>`;
+    });
+
+    const frontier = pts.filter((p) => p.isNonDominated).sort((a, b) => a.operationalCost - b.operationalCost);
+    let frontierPath = "";
+    frontier.forEach((p, i) => {
+      frontierPath += `${i === 0 ? "M" : "L"}${x(p.operationalCost).toFixed(1)},${y(p.contrailBenefit).toFixed(1)} `;
+    });
+
+    let circles = "";
+    pts.forEach((p) => {
+      const color = p.isKneePoint ? "var(--good)" : p.isNonDominated ? "var(--accent)" : "var(--text-2)";
+      const r = p.isKneePoint ? 7 : p.isNonDominated ? 5.5 : 4;
+      circles += `<circle class="pareto-point" data-id="${p.counterfactualId}" cx="${x(p.operationalCost).toFixed(1)}" cy="${y(p.contrailBenefit).toFixed(1)}" r="${r}" fill="${color}" stroke="${p.isKneePoint ? "rgba(127,224,167,0.4)" : "none"}" stroke-width="5"/>`;
+    });
+
+    const baseX = padL - 30;
+    const baseline = `<g>
+      <line x1="${baseX}" y1="${padT}" x2="${baseX}" y2="${H - padB}" stroke="var(--panel-border)" stroke-width="1" stroke-dasharray="2,3"/>
+      <circle cx="${baseX}" cy="${zeroY}" r="6" fill="var(--bad)"/>
+      <text x="${baseX}" y="${H - padB + 16}" font-family="var(--mono)" font-size="9.5" fill="var(--bad)" text-anchor="middle">ACTUAL</text>
+    </g>`;
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `
+      ${xTicks}${yTicks}
+      <text x="${(padL + W - padR) / 2}" y="${H - 4}" font-family="var(--mono)" font-size="10.5" fill="var(--text-2)" text-anchor="middle">operational cost (estimated fuel, log scale) →</text>
+      <text x="16" y="${(padT + H - padB) / 2}" font-family="var(--mono)" font-size="10.5" fill="var(--text-2)" text-anchor="middle" transform="rotate(-90 16 ${(padT + H - padB) / 2})">contrail impact reduction</text>
+      ${baseline}
+      <path d="${frontierPath}" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.5"/>
+      ${circles}
+    `;
+
+    svg.querySelectorAll(".pareto-point").forEach((el) => {
+      el.addEventListener("mousemove", (e) => showTooltip(e, el, pts, cfsById, svg, tooltip));
+      el.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+      el.addEventListener("click", () => {
+        const cf = cfsById[el.dataset.id];
+        if (cf && window.WhatIf) {
+          closePareto();
+          window.WhatIf.selectDirect(state, cf);
+        }
+      });
+    });
+
+    const knee = pts.find((p) => p.isKneePoint);
+    const callout = document.getElementById("paretoKneeCallout");
+    if (knee) {
+      const cf = cfsById[knee.counterfactualId];
+      callout.innerHTML = `<strong>High-leverage option:</strong> ${cf.strategy.kind.replace(/-/g, " ")} ${cf.strategy.altitudeOffsetFt > 0 ? "+" : ""}${cf.strategy.altitudeOffsetFt}ft reduces modeled contrail impact by ${(cf.impactReduction * 100).toFixed(1)}% for an estimated ${cf.estimatedFuelDeltaKg.toFixed(1)}kg fuel — a small fraction of the ${Math.max(...pts.map((p) => p.operationalCost)).toFixed(0)}kg the most aggressive alternative costs for full elimination. Not called "optimal" — the right tradeoff depends on priorities this system doesn't set.`;
+    } else {
+      callout.textContent = "";
+    }
+  }
+
+  function showTooltip(e, el, pts, cfsById, svg, tooltip) {
+    const p = pts.find((pp) => pp.counterfactualId === el.dataset.id);
+    const cf = cfsById[el.dataset.id];
+    if (!p || !cf) return;
+    const wrap = svg.parentElement.getBoundingClientRect();
+    tooltip.style.left = e.clientX - wrap.left + "px";
+    tooltip.style.top = e.clientY - wrap.top + "px";
+    tooltip.innerHTML = `${cf.strategy.kind.replace(/-/g, " ")} ${cf.strategy.altitudeOffsetFt > 0 ? "+" : ""}${cf.strategy.altitudeOffsetFt}ft<br>${(p.contrailBenefit * 100).toFixed(1)}% impact &middot; ${p.operationalCost.toFixed(1)}kg fuel<br>uncertainty: ${p.uncertainty}${p.isKneePoint ? "<br><strong style=\"color:var(--good)\">knee point</strong>" : p.isNonDominated ? "<br>non-dominated" : ""}`;
+    tooltip.classList.add("show");
+  }
+
+  window.ParetoView = { reset };
+})();
+</script>
+<script id="app-bundle">/* ==========================================================================
+   CONTRAIL TRADEOFF — application logic (Phase 1: landing, replay, drawer)
+   Consumes window.ContrailEngine (bundled from the verified src/ engine —
+   see src/browser-entry.ts). No science/simulation logic lives here; this
+   file only visualizes analyzeFlight() output and drives interaction.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const FLIGHT_META = {
+    "demo-jfk-lhr-b789": { blurb: "Eastbound transatlantic crossing. A sustained ice-supersaturated region concentrates most of the flight's modeled impact into one window." },
+    "demo-jfk-lhr-b789-clear": { blurb: "Same route and aircraft, different atmosphere. Conditions along this track never cross the threshold for a persistent contrail." },
+    "demo-bos-dub-a20n": { blurb: "Shorter narrowbody crossing. A moderate, more diffuse contrail-sensitive stretch — a genuine tradeoff case." },
+  };
+
+  const state = {
+    view: "landing",
+    cache: {},          // flightKey -> FlightAnalysis
+    cardsReady: false,
+    current: null,       // active FlightAnalysis
+    currentKey: null,
+    playIndex: 0,
+    playing: false,
+    playTimer: null,
+    selectedCfId: null,  // Phase 2
+    scopeHoverIdx: null,
+  };
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+  const { fmt, sensitivityFromAnalysis, buildProjection, project: projectPure, riskColor, latLonAltToXYZ } = window.IsobarLogic;
+
+  // ---------------------------------------------------------------------
+  // Boot
+  // ---------------------------------------------------------------------
+  function boot() {
+    renderCardSkeletons();
+    // Let first paint happen, then run the engine so the skeleton is visible.
+    requestAnimationFrame(() => {
+      setTimeout(computeAllFlightCards, 30);
+    });
+    wireLandingEvents();
+    wireFlightViewEvents();
+    wireModalEvents();
+  }
+
+  async function computeAllFlightCards() {
+    const keys = window.ContrailEngine.DEMO_FLIGHT_KEYS;
+    for (const key of keys) {
+      // Await sequentially (each resolves in well under a frame) so the
+      // skeleton-to-card fill reads as a deliberate reveal, not a flash.
+      try {
+        const analysis = await window.ContrailEngine.analyzeDemoFlight(key);
+        state.cache[key] = analysis;
+        renderFlightCard(key, analysis);
+      } catch (err) {
+        renderFlightCardError(key, err);
+      }
+    }
+    state.cardsReady = true;
+    document.dispatchEvent(new CustomEvent("cardsready"));
+  }
+
+  function renderFlightCardError(key, err) {
+    const el = document.querySelector(`.flight-card[data-key="${key}"]`);
+    if (!el) return;
+    el.setAttribute("aria-busy", "false");
+    el.innerHTML = `<div class="empty-note">This flight cannot currently be reconstructed from the selected data source.<br><span class="dim mono" style="font-size:10px;">${(err && err.message) || "unknown error"}</span></div>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Landing — flight cards
+  // ---------------------------------------------------------------------
+  function renderCardSkeletons() {
+    const grid = $("#flightGrid");
+    grid.innerHTML = window.ContrailEngine.DEMO_FLIGHT_KEYS
+      .map(
+        (key) => `
+      <div class="flight-card" data-key="${key}" aria-busy="true" role="listitem" tabindex="-1">
+        <div class="skel" style="height:22px;width:70%;margin-bottom:10px;"></div>
+        <div class="skel" style="height:13px;width:50%;margin-bottom:16px;"></div>
+        <div class="skel" style="height:13px;width:90%;margin-bottom:8px;"></div>
+        <div class="skel" style="height:13px;width:60%;"></div>
+      </div>`
+      )
+      .join("");
+  }
+
+  
+
+  function renderFlightCard(key, analysis) {
+    const el = document.querySelector(`.flight-card[data-key="${key}"]`);
+    if (!el) return;
+    const f = analysis.flight;
+    const durationMin = Math.round(
+      (new Date(f.arrivalTime) - new Date(f.departureTime)) / 60000
+    );
+    const sens = sensitivityFromAnalysis(analysis);
+    const hasWindow = analysis.criticalWindows.length > 0;
+    el.setAttribute("aria-busy", "false");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    el.setAttribute("aria-label", `Replay flight ${f.origin} to ${f.destination}, ${f.aircraft.displayName}, ${sens} contrail sensitivity`);
+    el.innerHTML = `
+      <div class="route">${f.origin}<span class="arrow">→</span>${f.destination}</div>
+      <div class="aircraft">${f.aircraft.displayName} · ${f.callsign}</div>
+      <div class="meta-row">
+        <span>${Math.floor(durationMin / 60)}h ${durationMin % 60}m</span>
+        <span class="sensitivity-badge ${sens}">${sens} sensitivity</span>
+      </div>
+      <div class="impact-line">${
+        hasWindow
+          ? `Modeled impact: ${fmt.tj(analysis.baselineTotalImpactJ)} &middot; critical window found`
+          : `Modeled impact: negligible &middot; no critical window`
+      }</div>
+      <div class="replay-cta"><span>Replay flight</span><span>→</span></div>
+    `;
+  }
+
+  function wireLandingEvents() {
+    $("#flightGrid").addEventListener("click", (e) => {
+      const card = e.target.closest(".flight-card");
+      if (!card || card.getAttribute("aria-busy") === "true") return;
+      openFlight(card.dataset.key);
+    });
+    $("#flightGrid").addEventListener("keydown", (e) => {
+      const card = e.target.closest(".flight-card");
+      if (!card || card.getAttribute("aria-busy") === "true") return;
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openFlight(card.dataset.key);
+      }
+    });
+    $("#exploreBtn").addEventListener("click", () => {
+      $("#flightSelect").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    $("#howItWorksBtn").addEventListener("click", () => openExplainModal("overview"));
+    $$(".brand").forEach((b) => {
+      b.addEventListener("click", goHome);
+      b.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          goHome();
+        }
+      });
+    });
+  }
+
+  function goHome() {
+    stopPlayback();
+    state.view = "landing";
+    $("#landingView").classList.add("active");
+    $("#flightView").classList.remove("active");
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }
+
+  function openFlight(key) {
+    const analysis = state.cache[key];
+    if (!analysis) return;
+    state.currentKey = key;
+    state.current = analysis;
+    state.playIndex = 0;
+    state.playing = false;
+    state.selectedCfId = null;
+    state.satVisible = false;
+    state.vizMode = "2d";
+
+    state.view = "flight";
+    $("#landingView").classList.remove("active");
+    $("#flightView").classList.add("active");
+    window.scrollTo({ top: 0 });
+
+    initFlightView(analysis, key);
+  }
+
+  // ---------------------------------------------------------------------
+  // Flight view — header + scope + timeline + altitude chart + drawer
+  // ---------------------------------------------------------------------
+  let scopeCanvas, scopeCtx, scopeProj;
+
+  function initFlightView(analysis, key) {
+    const f = analysis.flight;
+    $("#fvRoute").innerHTML = `${f.origin}<span class="arrow">→</span>${f.destination}`;
+    $("#fvSub").textContent = `${f.aircraft.displayName} · ${f.callsign} · ${fmt.date(f.departureTime)} · ${FLIGHT_META[key] ? FLIGHT_META[key].blurb : ""}`;
+
+    scopeCanvas = $("#scopeCanvas");
+    scopeCtx = scopeCanvas.getContext("2d");
+    scopeProj = buildProjection(analysis.flight.trajectory);
+    resizeScopeCanvas();
+
+    renderCriticalWindowPanel(analysis);
+    renderAltitudeChart(analysis);
+    renderTimelineCriticalMarks(analysis);
+    setPlayIndex(0);
+    renderDrawer(analysis, 0);
+    resetWhatIfPanel(analysis);
+    if (window.ParetoView && window.ParetoView.reset) window.ParetoView.reset(state);
+
+    // 3D globe degrades gracefully: only enabled when WebGL + the globe
+    // module actually initialized successfully (spec section 29 — the app
+    // must remain fully usable without WebGL).
+    const threeDBtn = $(".scope-mode-btn[data-mode='3d']");
+    const globeOk = !!(window.GlobeView && window.GlobeView.available());
+    threeDBtn.disabled = !globeOk;
+    threeDBtn.title = globeOk ? "" : "3D globe unavailable (WebGL not supported in this browser)";
+    $("#satToggleBtn").classList.remove("active");
+    $("#legendSat").classList.add("hidden");
+    setVizMode("2d");
+  }
+
+  function resizeScopeCanvas() {
+    if (!scopeCanvas) return;
+    const rect = scopeCanvas.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    scopeCanvas.width = rect.width * dpr;
+    scopeCanvas.height = 420 * dpr;
+    scopeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scopeProj.w = rect.width;
+    scopeProj.h = 420;
+    drawScope();
+  }
+  window.addEventListener("resize", () => {
+    resizeScopeCanvas();
+    if (window.GlobeView) window.GlobeView.resize();
+  });
+
+  function project(lat, lon) {
+    return projectPure(scopeProj, lat, lon);
+  }
+
+  function drawScope() {
+    if (!scopeCtx || !state.current) return;
+    const { w, h } = scopeProj;
+    const ctx = scopeCtx;
+    ctx.clearRect(0, 0, w, h);
+
+    // range rings
+    const cx = w / 2, cy = h / 2;
+    const maxR = Math.min(w, h) / 2 - 20;
+    ctx.strokeStyle = "rgba(140,190,230,0.10)";
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 4; i++) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, (maxR * i) / 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // spokes
+    ctx.strokeStyle = "rgba(140,190,230,0.06)";
+    for (let a = 0; a < 360; a += 30) {
+      const rad = (a * Math.PI) / 180;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(rad) * maxR, cy + Math.sin(rad) * maxR);
+      ctx.stroke();
+    }
+
+    const traj = state.current.flight.trajectory;
+    const annotated = state.current.baselineAnnotated;
+
+    // route, colored by risk per segment
+    for (let i = 0; i < traj.length - 1; i++) {
+      const a = project(traj[i].latitude, traj[i].longitude);
+      const b = project(traj[i + 1].latitude, traj[i + 1].longitude);
+      const sample = annotated[i] ? annotated[i].sample : null;
+      ctx.strokeStyle = riskColor(sample, 0.9);
+      ctx.lineWidth = sample && sample.segmentEnergyForcingJ > 0 ? 2.6 : 1.4;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
+    // critical window glow
+    state.current.criticalWindows.forEach((cw) => {
+      ctx.save();
+      ctx.shadowColor = "rgba(242,161,84,0.9)";
+      ctx.shadowBlur = 8;
+      ctx.strokeStyle = "rgba(242,161,84,0.95)";
+      ctx.lineWidth = 3.4;
+      ctx.beginPath();
+      for (let i = cw.startIndex; i <= cw.endIndex && i < traj.length; i++) {
+        const pt = project(traj[i].latitude, traj[i].longitude);
+        if (i === cw.startIndex) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // origin / destination markers
+    const o = project(traj[0].latitude, traj[0].longitude);
+    const d = project(traj[traj.length - 1].latitude, traj[traj.length - 1].longitude);
+    [o, d].forEach((p) => {
+      ctx.fillStyle = "rgba(200,215,225,0.8)";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.font = "10px " + getComputedStyle(document.body).getPropertyValue("--mono");
+    ctx.fillStyle = "rgba(170,190,205,0.7)";
+    ctx.fillText(state.current.flight.origin, o.x + 7, o.y - 7);
+    ctx.fillText(state.current.flight.destination, d.x + 7, d.y - 7);
+
+    // aircraft position (actual)
+    const idx = Math.min(state.playIndex, traj.length - 1);
+    const cur = project(traj[idx].latitude, traj[idx].longitude);
+    drawAircraft(cur, traj, idx, "#6fb8ff");
+
+    // counterfactual overlay
+    if (state.selectedCf) {
+      drawCounterfactualOverlay(state.selectedCf, idx);
+    }
+
+    // synthetic satellite-observation layer (spec section 32/33) — small
+    // offset ticks so they read as a distinct, separate layer from the
+    // model-colored route line, never merged into one "authoritative" line.
+    if (state.satVisible && window.SatelliteLayer) {
+      const detections = window.SatelliteLayer.computeDetections(state.current);
+      ctx.save();
+      for (let i = 0; i < traj.length - 1; i++) {
+        if (!detections[i] || !detections[i].observed) continue;
+        const a2 = project(traj[i].latitude, traj[i].longitude);
+        const b2 = project(traj[i + 1].latitude, traj[i + 1].longitude);
+        const mx = (a2.x + b2.x) / 2, my = (a2.y + b2.y) / 2;
+        const dx = b2.x - a2.x, dy = b2.y - a2.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const ox = (-dy / len) * 7, oy = (dx / len) * 7;
+        ctx.fillStyle = "rgba(201,139,242,0.85)";
+        ctx.beginPath();
+        ctx.arc(mx + ox, my + oy, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // HUD text
+    const pt = traj[idx];
+    const sample = annotated[idx] ? annotated[idx].sample : null;
+    $("#hudAlt").textContent = "FL" + Math.round(pt.altitudeFt / 100).toString().padStart(3, "0");
+    $("#hudTime").textContent = fmt.clock(pt.timestamp);
+    $("#hudRisk").textContent = sample
+      ? sample.persistentContrailProbability !== null
+        ? "P(persist) " + fmt.pct0(sample.persistentContrailProbability)
+        : "no SAC/ISSR"
+      : "—";
+  }
+
+  function drawAircraft(p, traj, idx, color) {
+    const ctx = scopeCtx;
+    const next = traj[Math.min(idx + 1, traj.length - 1)];
+    const cur = traj[idx];
+    const heading = Math.atan2(
+      project(next.latitude, next.longitude).x - p.x,
+      -(project(next.latitude, next.longitude).y - p.y)
+    );
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(heading);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(0, -7);
+    ctx.lineTo(5, 6);
+    ctx.lineTo(0, 3);
+    ctx.lineTo(-5, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawCounterfactualOverlay(cf, idx) {
+    const ctx = scopeCtx;
+    const traj = cf.modifiedTrajectory;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = "rgba(242,161,84,0.85)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    traj.forEach((pt, i) => {
+      const p = project(pt.latitude, pt.longitude);
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const cIdx = Math.min(idx, traj.length - 1);
+    const cp = project(traj[cIdx].latitude, traj[cIdx].longitude);
+    drawAircraft(cp, traj, cIdx, "#f2a154");
+  }
+
+  // ---------------------------------------------------------------------
+  // Timeline / transport controls
+  // ---------------------------------------------------------------------
+  function renderTimelineCriticalMarks(analysis) {
+    const track = $("#timelineTrack");
+    $$(".timeline-critical", track).forEach((n) => n.remove());
+    const total = analysis.flight.trajectory.length - 1;
+    analysis.criticalWindows.forEach((cw) => {
+      const mark = document.createElement("div");
+      mark.className = "timeline-critical";
+      mark.style.left = (cw.startIndex / total) * 100 + "%";
+      mark.style.width = Math.max(((cw.endIndex - cw.startIndex) / total) * 100, 0.6) + "%";
+      track.appendChild(mark);
+    });
+    $("#timelineInput").max = String(total);
+  }
+
+  function setPlayIndex(idx) {
+    if (!state.current) return;
+    const total = state.current.flight.trajectory.length - 1;
+    state.playIndex = Math.max(0, Math.min(idx, total));
+    $("#timelineInput").value = String(state.playIndex);
+    const pct = (state.playIndex / total) * 100;
+    $("#timelineFill").style.width = pct + "%";
+    $("#timelineThumb").style.left = pct + "%";
+    const pt = state.current.flight.trajectory[state.playIndex];
+    $("#timeReadout").textContent = fmt.clock(pt.timestamp);
+    render();
+    renderDrawer(state.current, state.playIndex);
+    updateAltChartCursor();
+  }
+
+  function stopPlayback() {
+    state.playing = false;
+    if (state.playTimer) clearInterval(state.playTimer);
+    $("#playBtn").innerHTML = playIcon();
+    $("#playBtn").setAttribute("aria-pressed", "false");
+    $("#playBtn").setAttribute("aria-label", "Play replay");
+  }
+
+  function togglePlay() {
+    if (!state.current) return;
+    state.playing = !state.playing;
+    $("#playBtn").innerHTML = state.playing ? pauseIcon() : playIcon();
+    $("#playBtn").setAttribute("aria-pressed", String(state.playing));
+    $("#playBtn").setAttribute("aria-label", state.playing ? "Pause replay" : "Play replay");
+    if (state.playing) {
+      const total = state.current.flight.trajectory.length - 1;
+      if (state.playIndex >= total) state.playIndex = 0;
+      state.playTimer = setInterval(() => {
+        if (state.playIndex >= total) {
+          stopPlayback();
+          return;
+        }
+        setPlayIndex(state.playIndex + Math.max(1, Math.round(total / 240)));
+      }, 45);
+    } else {
+      clearInterval(state.playTimer);
+    }
+  }
+
+  function playIcon() {
+    return '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 1l9 5-9 5V1z" fill="currentColor"/></svg>';
+  }
+  function pauseIcon() {
+    return '<svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="1" width="3" height="10" fill="currentColor"/><rect x="7" y="1" width="3" height="10" fill="currentColor"/></svg>';
+  }
+
+  function wireFlightViewEvents() {
+    $("#playBtn").addEventListener("click", togglePlay);
+    $("#restartBtn").addEventListener("click", () => {
+      stopPlayback();
+      setPlayIndex(0);
+    });
+    $("#timelineInput").addEventListener("input", (e) => {
+      stopPlayback();
+      setPlayIndex(parseInt(e.target.value, 10));
+    });
+    $("#jumpCriticalBtn").addEventListener("click", () => {
+      if (!state.current || !state.current.criticalWindows.length) return;
+      stopPlayback();
+      const cw = state.current.criticalWindows[0];
+      setPlayIndex(cw.startIndex);
+    });
+    $("#scopeModeToggle").addEventListener("click", (e) => {
+      const btn = e.target.closest(".scope-mode-btn");
+      if (!btn || btn.disabled) return;
+      if (btn.dataset.mode === "sat") {
+        state.satVisible = !state.satVisible;
+        btn.classList.toggle("active", state.satVisible);
+        btn.setAttribute("aria-pressed", String(state.satVisible));
+        $("#legendSat").classList.toggle("hidden", !state.satVisible);
+        render();
+        return;
+      }
+      setVizMode(btn.dataset.mode);
+    });
+  }
+
+  function setVizMode(mode) {
+    if (!window.GlobeView || !window.GlobeView.available()) mode = "2d";
+    state.vizMode = mode;
+    $$(".scope-mode-btn[data-mode='2d'],.scope-mode-btn[data-mode='3d']").forEach((b) => {
+      b.classList.toggle("active", b.dataset.mode === mode);
+      b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+    });
+    $("#scopeCanvas").classList.toggle("hidden", mode !== "2d");
+    $("#globeCanvas").classList.toggle("hidden", mode !== "3d");
+    if (mode === "3d") {
+      window.GlobeView.activate(state.current, state.playIndex, state.selectedCf, state.satVisible);
+    } else if (window.GlobeView) {
+      window.GlobeView.deactivate();
+    }
+    render();
+  }
+
+  function render() {
+    if (state.vizMode === "3d" && window.GlobeView) {
+      window.GlobeView.update(state.playIndex, state.selectedCf, state.satVisible);
+    } else {
+      drawScope();
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Altitude profile chart (SVG)
+  // ---------------------------------------------------------------------
+  let altChartMeta = null;
+
+  function renderAltitudeChart(analysis) {
+    const svg = $("#altChart");
+    const traj = analysis.flight.trajectory;
+    const W = 1000, H = 110, padL = 4, padR = 4, padT = 10, padB = 16;
+    const maxAlt = Math.max(38000, ...traj.map((p) => p.altitudeFt));
+    const n = traj.length;
+    const x = (i) => padL + (i / (n - 1)) * (W - padL - padR);
+    const y = (alt) => padT + (1 - alt / maxAlt) * (H - padT - padB);
+    altChartMeta = { x, y, W, H, n };
+
+    let path = "M";
+    traj.forEach((p, i) => {
+      path += `${i === 0 ? "" : "L"}${x(i).toFixed(1)},${y(p.altitudeFt).toFixed(1)} `;
+    });
+
+    let windowRects = "";
+    analysis.criticalWindows.forEach((cw) => {
+      const x1 = x(cw.startIndex), x2 = x(cw.endIndex);
+      windowRects += `<rect x="${x1}" y="${padT}" width="${Math.max(x2 - x1, 2)}" height="${H - padT - padB}" fill="var(--warn)" opacity="0.14"/>`;
+    });
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `
+      <line x1="${padL}" y1="${y(30000)}" x2="${W - padR}" y2="${y(30000)}" stroke="var(--panel-border)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="${padL}" y="${y(30000) - 4}" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">FL300</text>
+      ${windowRects}
+      <path d="${path}" fill="none" stroke="var(--actual)" stroke-width="1.6"/>
+      <line id="altCursor" x1="0" y1="${padT}" x2="0" y2="${H - padB}" stroke="var(--text-0)" stroke-width="1" opacity="0.85"/>
+      <circle id="altCursorDot" cx="0" cy="0" r="3" fill="var(--accent)"/>
+    `;
+  }
+
+  function updateAltChartCursor() {
+    if (!altChartMeta || !state.current) return;
+    const { x, y } = altChartMeta;
+    const idx = state.playIndex;
+    const pt = state.current.flight.trajectory[idx];
+    const cx = x(idx), cy = y(pt.altitudeFt);
+    const cursor = $("#altCursor"), dot = $("#altCursorDot");
+    if (cursor) { cursor.setAttribute("x1", cx); cursor.setAttribute("x2", cx); }
+    if (dot) { dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); }
+  }
+
+  // ---------------------------------------------------------------------
+  // Analysis drawer — atmospheric conditions + critical window panel
+  // ---------------------------------------------------------------------
+  function renderDrawer(analysis, idx) {
+    const sample = analysis.baselineAnnotated[idx] ? analysis.baselineAnnotated[idx].sample : null;
+    const box = $("#atmoPanel");
+    if (!sample) {
+      box.innerHTML = `<div class="empty-note">No atmospheric sample at this waypoint.</div>`;
+      return;
+    }
+    const forming = sample.sac === 1 && sample.issr === 1;
+    box.innerHTML = `
+      <div class="stat-row"><span class="k">Flight level</span><span class="v">FL${sample.flightLevel}</span></div>
+      <div class="stat-row"><span class="k">Ambient temperature</span><span class="v">${(sample.temperatureK - 273.15).toFixed(1)}&deg;C</span></div>
+      <div class="stat-row"><span class="k">RH over ice</span><span class="v">${sample.relativeHumidityIcePct.toFixed(0)}%</span></div>
+      <div class="stat-row"><span class="k">Schmidt-Appleman</span><span class="v ${sample.sac ? "warn" : ""}">${sample.sac === null ? "n/a" : sample.sac ? "criterion met" : "not met"}</span></div>
+      <div class="stat-row"><span class="k">Ice-supersaturated</span><span class="v ${sample.issr ? "warn" : ""}">${sample.issr === null ? "n/a" : sample.issr ? "yes (ISSR)" : "no"}</span></div>
+      <div class="stat-row"><span class="k">Persistent contrail</span><span class="v ${forming ? "warn" : ""}">${sample.persistentContrailProbability === null ? "—" : fmt.pct0(sample.persistentContrailProbability)}</span></div>
+      <div class="stat-row"><span class="k">Segment forcing</span><span class="v ${sample.segmentEnergyForcingJ > 0 ? "warn" : sample.segmentEnergyForcingJ < 0 ? "good" : ""}">${sample.segmentEnergyForcingJ === null ? "—" : (sample.segmentEnergyForcingJ / 1e9).toFixed(1) + " GJ"}</span></div>
+      <div class="stat-row"><span class="k">Confidence</span><span class="conf-badge ${sample.confidence}">${sample.confidence}</span></div>
+    `;
+  }
+
+  function renderCriticalWindowPanel(analysis) {
+    const box = $("#criticalWindowPanel");
+    if (!analysis.criticalWindows.length) {
+      box.innerHTML = `<div class="empty-note">No concentrated contrail-sensitive window was detected along this trajectory. Conditions stayed below the persistent-contrail threshold for essentially the whole flight — this is a genuine "clear" case, not missing data.</div>`;
+      return;
+    }
+    const cw = analysis.criticalWindows[0];
+    const durMin = Math.round(cw.durationSec / 60);
+    box.innerHTML = `
+      <div class="critical-window-box" id="cwJumpBox">
+        <div class="cw-title">Most important window</div>
+        <div class="cw-range">${fmt.clock(cw.startTimestamp)} &rarr; ${fmt.clock(cw.endTimestamp)} <span class="dim mono" style="font-size:11px;">(${durMin} min)</span></div>
+        <div class="cw-desc">This segment contains <strong>${fmt.pct0(cw.shareOfFlightImpact)}</strong> of the flight's modeled contrail impact. Confidence: ${cw.confidence}.</div>
+      </div>
+    `;
+    $("#cwJumpBox").addEventListener("click", () => {
+      stopPlayback();
+      setPlayIndex(cw.startIndex);
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Explanation modal (Phase 1: overview only; Phase 2 adds per-result)
+  // ---------------------------------------------------------------------
+  function wireModalEvents() {
+    $("#modalBackdrop").addEventListener("click", (e) => {
+      if (e.target.id === "modalBackdrop") closeModal();
+    });
+    $("#modalClose").addEventListener("click", closeModal);
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      closeModal();
+      const pb = $("#paretoBackdrop");
+      if (pb && pb.classList.contains("open")) pb.classList.remove("open");
+    });
+  }
+  function closeModal() {
+    $("#modalBackdrop").classList.remove("open");
+  }
+  window.openExplainModal = function (mode) {
+    const body = $("#modalBody");
+    $("#modalTitle").textContent = "How this works";
+    body.innerHTML = `
+      <div class="explain-flow">
+        <div class="explain-step"><span class="es-k">Flight data</span><span class="es-v">Reconstructed representative trajectory (real city pair &amp; aircraft type, great-circle route, documented phase-of-flight profile) — not raw recorded telemetry.</span></div>
+        <div class="explain-step"><span class="es-k">Atmosphere</span><span class="es-v">Synthetic field using real ICAO Standard Atmosphere temperature + Schmidt-Appleman / ISSR logic, with energy-forcing magnitudes drawn from documented CoCiP percentile distributions.</span></div>
+        <div class="explain-step"><span class="es-k">Critical window</span><span class="es-v">Segments are aggregated by contiguous positive energy forcing to find where impact concentrates — not just the single highest point.</span></div>
+        <div class="explain-step"><span class="es-k">Counterfactual</span><span class="es-v">Kinematically-continuous altitude ramps (no instantaneous jumps), re-sampled against the same atmospheric field.</span></div>
+        <div class="explain-step"><span class="es-k">Operational cost</span><span class="es-v">Simplified parabolic fuel model + constant-Mach time delta. Not a certified aircraft performance model.</span></div>
+        <div class="explain-step"><span class="es-k">3D globe</span><span class="es-v">Same underlying data as the 2D scope, rendered on a grid-line globe (no real coastline/terrain data used, by design) — an alternate view, not a different model.</span></div>
+        <div class="explain-step"><span class="es-k">Satellite layer</span><span class="es-v"><strong>Synthetic and illustrative</strong> — this build has no network access to any real satellite-derived contrail product. The violet markers are a deterministic, documented stand-in showing partial (not perfect) agreement with the model, to demonstrate the model-vs-observation distinction described in the methodology. They are not real imagery and are not attributed to any aircraft.</span></div>
+      </div>
+      <div class="limitations-title">Important limitations</div>
+      <ul class="limitations-list">
+        <li>Atmospheric data is a physically-grounded synthetic approximation, not a live weather model run.</li>
+        <li>Trajectory is reconstructed and representative, not recorded ADS-B telemetry.</li>
+        <li>Fuel/CO&sub2;/time deltas use a simplified, documented operational model.</li>
+        <li>This is an experimental analysis tool — not flight-dispatch or safety guidance.</li>
+      </ul>
+    `;
+    $("#modalBackdrop").classList.add("open");
+  };
+
+  function resetWhatIfPanel() {
+    // Phase 2 will populate this. Placeholder no-op kept so initFlightView
+    // can call it unconditionally without knowing which phase is loaded.
+    if (window.WhatIf && window.WhatIf.reset) window.WhatIf.reset(state, els());
+  }
+
+  function els() {
+    return { $, $$, fmt, drawScope: () => render() };
+  }
+
+  // Expose minimal shared surface for Phase 2/3 modules.
+  window.ContrailApp = { state, $, $$, fmt, drawScope: () => render(), setPlayIndex, stopPlayback, riskColor };
+
+  document.addEventListener("DOMContentLoaded", boot);
+})();
+</script>
+<script>
+  document.getElementById("backLink2").addEventListener("click", function () {
+    document.querySelector(".brand").click();
+  });
+  document.getElementById("backLink2").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      document.querySelector(".brand").click();
+    }
+  });
+  document.getElementById("howItWorksBtn2").addEventListener("click", function (e) {
+    e.preventDefault();
+    window.openExplainModal("overview");
+  });
+</script>
+</body>
+</html>

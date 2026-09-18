@@ -1,0 +1,29 @@
+{
+  "name": "isobar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Counterfactual flight-analysis laboratory: replay a real flight, alter its trajectory, and quantify the contrail-impact vs. operational-cost tradeoff.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["contrails", "climate", "aviation", "counterfactual-analysis", "hackathon"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test src/**/__tests__/*.test.ts",
+    "test:ui": "node --test ui/src/__tests__/*.test.js",
+    "test:all": "npm run test && npm run test:ui",
+    "typecheck": "tsc --noEmit",
+    "precompute": "tsx scripts/precompute-demo-flights.ts",
+    "build:engine": "esbuild src/browser-entry.ts --bundle --format=iife --target=es2020 --outfile=engine.bundle.js",
+    "build:ui": "npm run build:engine && node ui/build.js",
+    "serve:live": "tsx server.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2",
+    "@types/node": "^22.9.0",
+    "esbuild": "^0.28.2"
+  }
+}

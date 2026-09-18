@@ -1,0 +1,49 @@
+{
+  "flights": [
+    {
+      "id": "demo-jfk-lhr-b789",
+      "callsign": "DEMO101",
+      "origin": "JFK",
+      "destination": "LHR",
+      "aircraft": "Boeing 787-9",
+      "durationMin": 410,
+      "contrailSensitivity": "moderate",
+      "baselineTotalImpactJ": 519195502755644,
+      "hasCriticalWindow": true,
+      "dataProvenance": {
+        "source": "reconstructed-representative",
+        "note": "Reconstructed representative trajectory for a JFK-LHR Boeing 787-9 eastbound service: great-circle route between the two airports, with a phase-of-flight altitude/speed profile (climb, two operational step-climbs, cruise, descent) built from publicly documented typical operating patterns for this route and aircraft type. This is NOT a specific recorded flight's ADS-B telemetry - live historical retrieval from OpenSky requires network/account access unavailable in this build environment. See demo-data/README.md."
+      }
+    },
+    {
+      "id": "demo-jfk-lhr-b789-clear",
+      "callsign": "DEMO202",
+      "origin": "JFK",
+      "destination": "LHR",
+      "aircraft": "Boeing 787-9",
+      "durationMin": 400,
+      "contrailSensitivity": "low",
+      "baselineTotalImpactJ": 0,
+      "hasCriticalWindow": false,
+      "dataProvenance": {
+        "source": "reconstructed-representative",
+        "note": "Reconstructed representative trajectory for a JFK-LHR Boeing 787-9 service departing at a different time than the primary demo flight, cruising higher (FL380 for most of the crossing). Same construction method and caveats as demo-jfk-lhr-b789 - see demo-data/README.md."
+      }
+    },
+    {
+      "id": "demo-bos-dub-a20n",
+      "callsign": "DEMO303",
+      "origin": "BOS",
+      "destination": "DUB",
+      "aircraft": "Airbus A320neo",
+      "durationMin": 340,
+      "contrailSensitivity": "moderate",
+      "baselineTotalImpactJ": 223372390080852.94,
+      "hasCriticalWindow": true,
+      "dataProvenance": {
+        "source": "reconstructed-representative",
+        "note": "Reconstructed representative trajectory for a Boston-Dublin A320neo service. Same construction method and caveats as demo-jfk-lhr-b789 - see demo-data/README.md."
+      }
+    }
+  ]
+}
