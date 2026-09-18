@@ -6,13 +6,13 @@
 
 **Contrail Tradeoff** is a counterfactual flight-analysis engine that replays real flight trajectories, identifies atmospheric regions where persistent contrails are more likely to form, and generates physically constrained alternative flight profiles. 
 
-Aviation contributes to global warming not just through carbon dioxide emissions, but significantly through non-CO$_2$ effects—most notably, the formation of persistent contrail cirrus clouds. When aircraft fly through cold, humid air masses known as Ice Supersaturated Regions (ISSRs), water vapor condenses and freezes around exhaust soot, creating artificial clouds that trap outgoing terrestrial heat.
+Aviation contributes to global warming not just through carbon dioxide emissions, but significantly through non-CO<sub>2</sub> effects—most notably, the formation of persistent contrail cirrus clouds. When aircraft fly through cold, humid air masses known as Ice Supersaturated Regions (ISSRs), water vapor condenses and freezes around exhaust soot, creating artificial clouds that trap outgoing terrestrial heat.
 
 Rather than simply detecting these contrails after a flight has occurred, Contrail Tradeoff asks a more actionable, predictive question:
 
 > **What could have happened if the aircraft had flown differently?**
 
-The system evaluates alternative trajectories and quantifies the tradeoff between **modeled contrail climate impact** (measured in energy forcing) and **operational cost**, including fuel consumption, CO$_2$ emissions, and flight time. 
+The system evaluates alternative trajectories and quantifies the tradeoff between **modeled contrail climate impact** (measured in energy forcing) and **operational cost**, including fuel consumption, CO<sub>2</sub> emissions, and flight time. 
 
 The goal is not to blindly dictate a single "perfect" trajectory. Instead, Contrail Tradeoff exposes the **Pareto frontier of feasible alternatives**, allowing the climate benefit of an intervention to be compared directly against its operational penalty.
 
@@ -39,11 +39,11 @@ This creates an unusual optimization problem. A flight does not necessarily need
 
 However, that intervention comes with a cost. Commercial aircraft are meticulously flight-planned to cruise at optimal altitudes that minimize drag and fuel burn. Deviating from this optimum increases:
 *   Fuel consumption
-*   Direct CO$_2$ emissions
+*   Direct CO<sub>2</sub> emissions
 *   Flight time
 *   Operational complexity for Air Traffic Control (ATC)
 
-This means that **minimizing contrail impact alone is not sufficient**. We must balance the reduction in contrail radiative forcing against the increase in CO$_2$ forcing, which lasts for centuries. 
+This means that **minimizing contrail impact alone is not sufficient**. We must balance the reduction in contrail radiative forcing against the increase in CO<sub>2</sub> forcing, which lasts for centuries. 
 
 The core optimization problem seeks to explore the feasible trajectory space $\mathcal{T}$ to evaluate the cost-benefit ratio of an alternative trajectory $T_{alt}$ compared to the baseline trajectory $T_{base}$:
 
@@ -64,9 +64,9 @@ The system processes flights through a rigorous, counterfactual simulation pipel
 3. **Contrail Formation Modeling:** Applies physical and empirical models to determine if a persistent contrail would form given the aircraft's specific engine parameters and the reconstructed atmosphere.
 4. **Critical Window Detection:** Isolates the specific segments of the flight (the "critical windows") where contrail generation is active and structurally significant.
 5. **Counterfactual Trajectory Generation:** Generates a localized envelope of feasible alternative flight profiles (e.g., step-climbs or step-descents) that avoid the critical window while adhering to aircraft performance limits and standard ATC flight levels.
-6. **Operational Cost Modeling:** Calculates the fuel burn, total CO$_2$ emitted, and time delta for each counterfactual trajectory using established aircraft performance models.
+6. **Operational Cost Modeling:** Calculates the fuel burn, total CO<sub>2</sub> emitted, and time delta for each counterfactual trajectory using established aircraft performance models.
 7. **Pareto Analysis:** Filters the generated profiles to eliminate strictly dominated options, isolating the mathematical Pareto frontier.
-8. **Tradeoff Visualization:** Presents the data to dispatchers or analysts, plotting climate impact reduction directly against additional fuel/CO$_2$ costs.
+8. **Tradeoff Visualization:** Presents the data to dispatchers or analysts, plotting climate impact reduction directly against additional fuel/CO<sub>2</sub> costs.
 
 ---
 
@@ -81,7 +81,7 @@ Currently, the counterfactual engine focuses heavily on vertical step-climbs and
 To move from a retrospective analysis tool to an active operational aid, Contrail Tradeoff will integrate with live high-resolution weather ensemble forecasts (like the ECMWF or GFS). This will allow the engine to expose an API for flight dispatchers to evaluate contrail tradeoffs *before* takeoff, rather than just replaying historical flights.
 
 ### 3. Economic and Carbon Pricing Models
-Airlines operate on strict financial margins. The next update will introduce dynamic economic modeling, translating the $\Delta \text{Fuel}$ and $\Delta \text{CO}_2$ into direct dollar values, while applying projected carbon-credit pricing to the avoided contrail impact. This will allow airlines to see the direct financial ROI of flying a climate-optimized route.
+Airlines operate on strict financial margins. The next update will introduce dynamic economic modeling, translating the $\Delta$ Fuel and $\Delta$ CO<sub>2</sub> into direct dollar values, while applying projected carbon-credit pricing to the avoided contrail impact. This will allow airlines to see the direct financial ROI of flying a climate-optimized route.
 
 ### 4. Handling Weather Uncertainty
 Atmospheric humidity forecasting is notoriously difficult. Future builds will incorporate probabilistic contrail modeling, shifting the output from deterministic calculations to confidence intervals (e.g., *"This intervention has an 85% probability of avoiding a high-impact contrail"*), ensuring that airlines do not burn extra fuel for a climate benefit that fails to materialize.
